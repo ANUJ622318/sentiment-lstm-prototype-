@@ -1,0 +1,19 @@
+{
+  "project_id": "DL-014",
+  "project_title": "Text Sentiment Analysis using LSTM",
+  "dataset_name": "IMDb Large Movie Review Dataset (Keras built-in)",
+  "train_samples": 10000,
+  "test_samples": 2500,
+  "vocabulary_size": 9999,
+  "max_sequence_length": 200,
+  "embedding_dimensions": 64,
+  "lstm_units": 64,
+  "epochs_trained": 3,
+  "batch_size": 64,
+  "test_loss": 0.414399653673172,
+  "test_accuracy": 0.8375999927520752,
+  "final_train_loss": 0.2264956384897232,
+  "final_train_accuracy": 0.9143529534339905,
+  "final_val_loss": 0.34505724906921387,
+  "final_val_accuracy": 0.8733333349227905
+}

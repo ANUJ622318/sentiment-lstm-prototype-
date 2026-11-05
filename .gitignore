@@ -1,0 +1,23 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Jupyter / Checkpoints
+.ipynb_checkpoints/
+
+# macOS system files
+.DS_Store
+
+# Streamlit runtime
+.streamlit/secrets.toml
+
+# IDE settings
+.vscode/
+.idea/
