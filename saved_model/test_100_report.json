@@ -1,0 +1,1624 @@
+{
+  "total_sentences": 105,
+  "correct_predictions": 79,
+  "overall_accuracy_pct": 75.24,
+  "category_statistics": {
+    "Negative Emotions": {
+      "total": 15,
+      "correct": 14
+    },
+    "Negations": {
+      "total": 12,
+      "correct": 8
+    },
+    "Double Negations": {
+      "total": 10,
+      "correct": 4
+    },
+    "Positive Sentiments": {
+      "total": 15,
+      "correct": 14
+    },
+    "Neutral Statements": {
+      "total": 15,
+      "correct": 15
+    },
+    "Mixed Sentiments": {
+      "total": 10,
+      "correct": 7
+    },
+    "Sarcasm & Irony": {
+      "total": 8,
+      "correct": 2
+    },
+    "Informal Language": {
+      "total": 10,
+      "correct": 7
+    },
+    "Short Expressions": {
+      "total": 6,
+      "correct": 5
+    },
+    "Long Reviews": {
+      "total": 4,
+      "correct": 3
+    }
+  },
+  "detailed_results": [
+    {
+      "id": 1,
+      "category": "Negative Emotions",
+      "text": "I am demotivated with her.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 80.31,
+      "probabilities": {
+        "negative": 0.8031,
+        "neutral": 0.0392,
+        "positive": 0.1578
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 2,
+      "category": "Negative Emotions",
+      "text": "I hate this.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 60.99,
+      "probabilities": {
+        "negative": 0.6099,
+        "neutral": 0.0181,
+        "positive": 0.372
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 3,
+      "category": "Negative Emotions",
+      "text": "I am disappointed.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 72.74,
+      "probabilities": {
+        "negative": 0.7274,
+        "neutral": 0.0359,
+        "positive": 0.2367
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 4,
+      "category": "Negative Emotions",
+      "text": "I don't like her.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 70.21,
+      "probabilities": {
+        "negative": 0.7021,
+        "neutral": 0.0535,
+        "positive": 0.2444
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 5,
+      "category": "Negative Emotions",
+      "text": "This is not good.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 66.35,
+      "probabilities": {
+        "negative": 0.6635,
+        "neutral": 0.0466,
+        "positive": 0.2899
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 6,
+      "category": "Negative Emotions",
+      "text": "I regret my decision.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 79.68,
+      "probabilities": {
+        "negative": 0.7968,
+        "neutral": 0.0276,
+        "positive": 0.1756
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 7,
+      "category": "Negative Emotions",
+      "text": "I feel terrible.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 80.36,
+      "probabilities": {
+        "negative": 0.8036,
+        "neutral": 0.0285,
+        "positive": 0.1679
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 8,
+      "category": "Negative Emotions",
+      "text": "I am unhappy with the result.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 77.45,
+      "probabilities": {
+        "negative": 0.7745,
+        "neutral": 0.0639,
+        "positive": 0.1616
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 9,
+      "category": "Negative Emotions",
+      "text": "I expected better.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 68.34,
+      "probabilities": {
+        "negative": 0.6834,
+        "neutral": 0.0302,
+        "positive": 0.2865
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 10,
+      "category": "Negative Emotions",
+      "text": "Nothing is going right.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 45.52,
+      "probabilities": {
+        "negative": 0.4552,
+        "neutral": 0.2936,
+        "positive": 0.2512
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 11,
+      "category": "Negative Emotions",
+      "text": "I feel completely hopeless and tired.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 91.88,
+      "probabilities": {
+        "negative": 0.9188,
+        "neutral": 0.0122,
+        "positive": 0.069
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 12,
+      "category": "Negative Emotions",
+      "text": "The manager was extremely rude and uncooperative.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 83.8,
+      "probabilities": {
+        "negative": 0.838,
+        "neutral": 0.0376,
+        "positive": 0.1244
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 13,
+      "category": "Negative Emotions",
+      "text": "Worst purchase I have ever made in my entire life.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 62.21,
+      "probabilities": {
+        "negative": 0.6221,
+        "neutral": 0.1262,
+        "positive": 0.2517
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 14,
+      "category": "Negative Emotions",
+      "text": "I am disgusted by how they treat paying customers.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 63.74,
+      "probabilities": {
+        "negative": 0.2118,
+        "neutral": 0.1509,
+        "positive": 0.6374
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 15,
+      "category": "Negative Emotions",
+      "text": "A total waste of my valuable time and hard-earned money.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 87.95,
+      "probabilities": {
+        "negative": 0.8795,
+        "neutral": 0.0257,
+        "positive": 0.0948
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 16,
+      "category": "Negations",
+      "text": "I am not happy.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 63.53,
+      "probabilities": {
+        "negative": 0.6353,
+        "neutral": 0.0634,
+        "positive": 0.3013
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 17,
+      "category": "Negations",
+      "text": "This is not great.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 49.59,
+      "probabilities": {
+        "negative": 0.4543,
+        "neutral": 0.0498,
+        "positive": 0.4959
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 18,
+      "category": "Negations",
+      "text": "I cannot recommend this to anyone.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 72.43,
+      "probabilities": {
+        "negative": 0.7243,
+        "neutral": 0.0284,
+        "positive": 0.2473
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 19,
+      "category": "Negations",
+      "text": "It did not meet my expectations.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 72.38,
+      "probabilities": {
+        "negative": 0.214,
+        "neutral": 0.0622,
+        "positive": 0.7238
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 20,
+      "category": "Negations",
+      "text": "She was not helpful at all.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 57.89,
+      "probabilities": {
+        "negative": 0.5789,
+        "neutral": 0.2018,
+        "positive": 0.2193
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 21,
+      "category": "Negations",
+      "text": "The laptop does not work properly.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 44.3,
+      "probabilities": {
+        "negative": 0.443,
+        "neutral": 0.3619,
+        "positive": 0.1952
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 22,
+      "category": "Negations",
+      "text": "There is no excuse for this poor behavior.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 91.6,
+      "probabilities": {
+        "negative": 0.916,
+        "neutral": 0.0212,
+        "positive": 0.0628
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 23,
+      "category": "Negations",
+      "text": "I will never come back here again.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 49.31,
+      "probabilities": {
+        "negative": 0.4729,
+        "neutral": 0.034,
+        "positive": 0.4931
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 24,
+      "category": "Negations",
+      "text": "This product lacks any real value.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 88.03,
+      "probabilities": {
+        "negative": 0.8803,
+        "neutral": 0.0102,
+        "positive": 0.1095
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 25,
+      "category": "Negations",
+      "text": "The battery is not holding any charge.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 83.45,
+      "probabilities": {
+        "negative": 0.8345,
+        "neutral": 0.0371,
+        "positive": 0.1284
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 26,
+      "category": "Negations",
+      "text": "I am by no means satisfied.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 61.73,
+      "probabilities": {
+        "negative": 0.6173,
+        "neutral": 0.0773,
+        "positive": 0.3054
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 27,
+      "category": "Negations",
+      "text": "Nobody enjoyed the presentation.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 54.59,
+      "probabilities": {
+        "negative": 0.4103,
+        "neutral": 0.0438,
+        "positive": 0.5459
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 28,
+      "category": "Double Negations",
+      "text": "I don't think this is bad.",
+      "expected": "POSITIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 62.27,
+      "probabilities": {
+        "negative": 0.6227,
+        "neutral": 0.1051,
+        "positive": 0.2722
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 29,
+      "category": "Double Negations",
+      "text": "This is not bad at all.",
+      "expected": "POSITIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 58.4,
+      "probabilities": {
+        "negative": 0.584,
+        "neutral": 0.1165,
+        "positive": 0.2995
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 30,
+      "category": "Double Negations",
+      "text": "It is hard to dislike this movie.",
+      "expected": "POSITIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 77.58,
+      "probabilities": {
+        "negative": 0.7758,
+        "neutral": 0.021,
+        "positive": 0.2032
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 31,
+      "category": "Double Negations",
+      "text": "I cannot complain about the customer support.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 55.79,
+      "probabilities": {
+        "negative": 0.4167,
+        "neutral": 0.0254,
+        "positive": 0.5579
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 32,
+      "category": "Double Negations",
+      "text": "Nothing short of wonderful.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 49.67,
+      "probabilities": {
+        "negative": 0.4467,
+        "neutral": 0.0566,
+        "positive": 0.4967
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 33,
+      "category": "Double Negations",
+      "text": "Not disappointing in any way.",
+      "expected": "POSITIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 58.56,
+      "probabilities": {
+        "negative": 0.5856,
+        "neutral": 0.1202,
+        "positive": 0.2942
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 34,
+      "category": "Double Negations",
+      "text": "I do not regret my decision to buy this.",
+      "expected": "POSITIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 70.92,
+      "probabilities": {
+        "negative": 0.7092,
+        "neutral": 0.0985,
+        "positive": 0.1923
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 35,
+      "category": "Double Negations",
+      "text": "She is not unpleasant to be around.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 57.22,
+      "probabilities": {
+        "negative": 0.377,
+        "neutral": 0.0508,
+        "positive": 0.5722
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 36,
+      "category": "Double Negations",
+      "text": "It was not terrible, actually pretty enjoyable.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 76.62,
+      "probabilities": {
+        "negative": 0.1695,
+        "neutral": 0.0643,
+        "positive": 0.7662
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 37,
+      "category": "Double Negations",
+      "text": "You will certainly not be disappointed.",
+      "expected": "POSITIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 77.09,
+      "probabilities": {
+        "negative": 0.7709,
+        "neutral": 0.0157,
+        "positive": 0.2135
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 38,
+      "category": "Positive Sentiments",
+      "text": "I am so happy and motivated today.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 73.03,
+      "probabilities": {
+        "negative": 0.145,
+        "neutral": 0.1248,
+        "positive": 0.7303
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 39,
+      "category": "Positive Sentiments",
+      "text": "This movie was an absolute masterpiece!",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 49.2,
+      "probabilities": {
+        "negative": 0.4908,
+        "neutral": 0.0172,
+        "positive": 0.492
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 40,
+      "category": "Positive Sentiments",
+      "text": "The acting was superb and truly inspiring.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 64.08,
+      "probabilities": {
+        "negative": 0.3308,
+        "neutral": 0.0284,
+        "positive": 0.6408
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 41,
+      "category": "Positive Sentiments",
+      "text": "I love this product and use it daily.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 67.37,
+      "probabilities": {
+        "negative": 0.2784,
+        "neutral": 0.0478,
+        "positive": 0.6737
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 42,
+      "category": "Positive Sentiments",
+      "text": "I feel deeply grateful for all your support.",
+      "expected": "POSITIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 50.47,
+      "probabilities": {
+        "negative": 0.5047,
+        "neutral": 0.0551,
+        "positive": 0.4401
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 43,
+      "category": "Positive Sentiments",
+      "text": "Outstanding work by the entire engineering team.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 64.88,
+      "probabilities": {
+        "negative": 0.2935,
+        "neutral": 0.0577,
+        "positive": 0.6488
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 44,
+      "category": "Positive Sentiments",
+      "text": "The food was delicious, flavorful, and hot.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 55.53,
+      "probabilities": {
+        "negative": 0.4244,
+        "neutral": 0.0203,
+        "positive": 0.5553
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 45,
+      "category": "Positive Sentiments",
+      "text": "Highly recommended to anyone looking for quality.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 85.89,
+      "probabilities": {
+        "negative": 0.128,
+        "neutral": 0.0131,
+        "positive": 0.8589
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 46,
+      "category": "Positive Sentiments",
+      "text": "Brilliant directing and remarkable visual effects.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 83.61,
+      "probabilities": {
+        "negative": 0.1111,
+        "neutral": 0.0528,
+        "positive": 0.8361
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 47,
+      "category": "Positive Sentiments",
+      "text": "Fast shipping and exceptional customer service.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 85.64,
+      "probabilities": {
+        "negative": 0.1364,
+        "neutral": 0.0072,
+        "positive": 0.8564
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 48,
+      "category": "Positive Sentiments",
+      "text": "I am so proud of our project achievements.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 60.09,
+      "probabilities": {
+        "negative": 0.2445,
+        "neutral": 0.1546,
+        "positive": 0.6009
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 49,
+      "category": "Positive Sentiments",
+      "text": "A wonderful, heartwarming, and touching story.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 95.84,
+      "probabilities": {
+        "negative": 0.0309,
+        "neutral": 0.0107,
+        "positive": 0.9584
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 50,
+      "category": "Positive Sentiments",
+      "text": "The battery life exceeded all my expectations.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 71.02,
+      "probabilities": {
+        "negative": 0.2344,
+        "neutral": 0.0554,
+        "positive": 0.7102
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 51,
+      "category": "Positive Sentiments",
+      "text": "Top notch build quality and sleek design.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 73.44,
+      "probabilities": {
+        "negative": 0.24,
+        "neutral": 0.0255,
+        "positive": 0.7344
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 52,
+      "category": "Positive Sentiments",
+      "text": "I am delightfully surprised by how good this is.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 75.56,
+      "probabilities": {
+        "negative": 0.1805,
+        "neutral": 0.0638,
+        "positive": 0.7556
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 53,
+      "category": "Neutral Statements",
+      "text": "I went to college today.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 35.88,
+      "probabilities": {
+        "negative": 0.2891,
+        "neutral": 0.3588,
+        "positive": 0.3522
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 54,
+      "category": "Neutral Statements",
+      "text": "The library opens at 9 AM and closes at 8 PM.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 72.19,
+      "probabilities": {
+        "negative": 0.1449,
+        "neutral": 0.7219,
+        "positive": 0.1332
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 55,
+      "category": "Neutral Statements",
+      "text": "The train arrives at platform four at 4 PM.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 89.44,
+      "probabilities": {
+        "negative": 0.0393,
+        "neutral": 0.8944,
+        "positive": 0.0663
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 56,
+      "category": "Neutral Statements",
+      "text": "The flight departs at 6:30 PM this evening.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 72.69,
+      "probabilities": {
+        "negative": 0.1799,
+        "neutral": 0.7269,
+        "positive": 0.0932
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 57,
+      "category": "Neutral Statements",
+      "text": "Today is Tuesday and tomorrow is Wednesday.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 86.8,
+      "probabilities": {
+        "negative": 0.0497,
+        "neutral": 0.868,
+        "positive": 0.0822
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 58,
+      "category": "Neutral Statements",
+      "text": "It is 24 degrees Celsius in the city right now.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 60.01,
+      "probabilities": {
+        "negative": 0.1994,
+        "neutral": 0.6001,
+        "positive": 0.2005
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 59,
+      "category": "Neutral Statements",
+      "text": "The package was delivered by courier yesterday.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 70.11,
+      "probabilities": {
+        "negative": 0.1466,
+        "neutral": 0.7011,
+        "positive": 0.1524
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 60,
+      "category": "Neutral Statements",
+      "text": "The textbook has three hundred and fifty pages.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 72.93,
+      "probabilities": {
+        "negative": 0.1493,
+        "neutral": 0.7293,
+        "positive": 0.1214
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 61,
+      "category": "Neutral Statements",
+      "text": "He submitted the laboratory assignment on time.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 79.94,
+      "probabilities": {
+        "negative": 0.0992,
+        "neutral": 0.7994,
+        "positive": 0.1015
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 62,
+      "category": "Neutral Statements",
+      "text": "She is reading a technical document in the hall.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 63.01,
+      "probabilities": {
+        "negative": 0.2206,
+        "neutral": 0.6301,
+        "positive": 0.1493
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 63,
+      "category": "Neutral Statements",
+      "text": "The retail store is located on the second floor.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 83.78,
+      "probabilities": {
+        "negative": 0.0594,
+        "neutral": 0.8378,
+        "positive": 0.1028
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 64,
+      "category": "Neutral Statements",
+      "text": "We discussed the project outline during the meeting.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 74.42,
+      "probabilities": {
+        "negative": 0.1679,
+        "neutral": 0.7442,
+        "positive": 0.0879
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 65,
+      "category": "Neutral Statements",
+      "text": "There are four wooden chairs around the conference table.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 78.17,
+      "probabilities": {
+        "negative": 0.0984,
+        "neutral": 0.7817,
+        "positive": 0.1199
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 66,
+      "category": "Neutral Statements",
+      "text": "The smartphone comes packaged with a USB charger.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 83.38,
+      "probabilities": {
+        "negative": 0.0586,
+        "neutral": 0.8338,
+        "positive": 0.1076
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 67,
+      "category": "Neutral Statements",
+      "text": "He resides in a residential apartment in Bangalore.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 75.02,
+      "probabilities": {
+        "negative": 0.1308,
+        "neutral": 0.7502,
+        "positive": 0.1191
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 68,
+      "category": "Mixed Sentiments",
+      "text": "I love the product but hate its customer service.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 54.38,
+      "probabilities": {
+        "negative": 0.4514,
+        "neutral": 0.0049,
+        "positive": 0.5438
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 69,
+      "category": "Mixed Sentiments",
+      "text": "The food was great, however the waiter was rude.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 63.46,
+      "probabilities": {
+        "negative": 0.6346,
+        "neutral": 0.0524,
+        "positive": 0.313
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 70,
+      "category": "Mixed Sentiments",
+      "text": "The camera is awesome but the battery life is terrible.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 74.91,
+      "probabilities": {
+        "negative": 0.7491,
+        "neutral": 0.0419,
+        "positive": 0.209
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 71,
+      "category": "Mixed Sentiments",
+      "text": "Although the visuals were stunning, the plot was boring.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 52.94,
+      "probabilities": {
+        "negative": 0.5294,
+        "neutral": 0.0485,
+        "positive": 0.4221
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 72,
+      "category": "Mixed Sentiments",
+      "text": "It started out promising but quickly turned awful.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 89.43,
+      "probabilities": {
+        "negative": 0.8943,
+        "neutral": 0.0736,
+        "positive": 0.0321
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 73,
+      "category": "Mixed Sentiments",
+      "text": "The hardware is good, yet the software is completely broken.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 37.2,
+      "probabilities": {
+        "negative": 0.336,
+        "neutral": 0.292,
+        "positive": 0.372
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 74,
+      "category": "Mixed Sentiments",
+      "text": "Despite a slow start, the climax was truly breathtaking.",
+      "expected": "POSITIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 59.4,
+      "probabilities": {
+        "negative": 0.594,
+        "neutral": 0.0429,
+        "positive": 0.3631
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 75,
+      "category": "Mixed Sentiments",
+      "text": "It was somewhat pricey, but definitely worth every penny.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 67.34,
+      "probabilities": {
+        "negative": 0.2887,
+        "neutral": 0.0379,
+        "positive": 0.6734
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 76,
+      "category": "Mixed Sentiments",
+      "text": "The room was a bit small, but the staff was wonderful.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 73.9,
+      "probabilities": {
+        "negative": 0.1701,
+        "neutral": 0.0909,
+        "positive": 0.739
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 77,
+      "category": "Mixed Sentiments",
+      "text": "This is worse than before.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 82.38,
+      "probabilities": {
+        "negative": 0.8238,
+        "neutral": 0.0664,
+        "positive": 0.1098
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 78,
+      "category": "Sarcasm & Irony",
+      "text": "Great, another problem to deal with!",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 71.95,
+      "probabilities": {
+        "negative": 0.7195,
+        "neutral": 0.0421,
+        "positive": 0.2384
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 79,
+      "category": "Sarcasm & Irony",
+      "text": "Oh fantastic, my flight just got cancelled again.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 52.48,
+      "probabilities": {
+        "negative": 0.4072,
+        "neutral": 0.068,
+        "positive": 0.5248
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 80,
+      "category": "Sarcasm & Irony",
+      "text": "Just what I needed, a broken screen on day one.",
+      "expected": "NEGATIVE",
+      "predicted": "NEUTRAL",
+      "confidence": 35.34,
+      "probabilities": {
+        "negative": 0.3458,
+        "neutral": 0.3534,
+        "positive": 0.3008
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 81,
+      "category": "Sarcasm & Irony",
+      "text": "Wonderful, the server crashed during our live demo.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 64.13,
+      "probabilities": {
+        "negative": 0.2738,
+        "neutral": 0.0849,
+        "positive": 0.6413
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 82,
+      "category": "Sarcasm & Irony",
+      "text": "Brilliant idea to reboot the production database at noon.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 45.3,
+      "probabilities": {
+        "negative": 0.453,
+        "neutral": 0.3686,
+        "positive": 0.1784
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 83,
+      "category": "Sarcasm & Irony",
+      "text": "Yeah right, as if that was ever going to work.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 38.34,
+      "probabilities": {
+        "negative": 0.3131,
+        "neutral": 0.3035,
+        "positive": 0.3834
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 84,
+      "category": "Sarcasm & Irony",
+      "text": "Super helpful of them to reply two months later.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 62.8,
+      "probabilities": {
+        "negative": 0.2128,
+        "neutral": 0.1592,
+        "positive": 0.628
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 85,
+      "category": "Sarcasm & Irony",
+      "text": "Perfect, now I have no way to get home.",
+      "expected": "NEGATIVE",
+      "predicted": "POSITIVE",
+      "confidence": 48.79,
+      "probabilities": {
+        "negative": 0.4358,
+        "neutral": 0.0763,
+        "positive": 0.4879
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 86,
+      "category": "Informal Language",
+      "text": "omg this is sooo amazing!!",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 66.06,
+      "probabilities": {
+        "negative": 0.2697,
+        "neutral": 0.0696,
+        "positive": 0.6606
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 87,
+      "category": "Informal Language",
+      "text": "this app is super lit and dope",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 74.31,
+      "probabilities": {
+        "negative": 0.2217,
+        "neutral": 0.0352,
+        "positive": 0.7431
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 88,
+      "category": "Informal Language",
+      "text": "yayy got my dream internship offer today!!",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 65.73,
+      "probabilities": {
+        "negative": 0.2017,
+        "neutral": 0.141,
+        "positive": 0.6573
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 89,
+      "category": "Informal Language",
+      "text": "huge shoutout to the devs for fixing this fast!!",
+      "expected": "POSITIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 52.48,
+      "probabilities": {
+        "negative": 0.5248,
+        "neutral": 0.1228,
+        "positive": 0.3524
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 90,
+      "category": "Informal Language",
+      "text": "ugh this update is so trash and laggy",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 67.62,
+      "probabilities": {
+        "negative": 0.6762,
+        "neutral": 0.1002,
+        "positive": 0.2237
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 91,
+      "category": "Informal Language",
+      "text": "smh worst update ever, completely bricked my phone",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 73.57,
+      "probabilities": {
+        "negative": 0.7357,
+        "neutral": 0.1916,
+        "positive": 0.0727
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 92,
+      "category": "Informal Language",
+      "text": "bruh this food tastes like cardboard wtf",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 72.29,
+      "probabilities": {
+        "negative": 0.7229,
+        "neutral": 0.0249,
+        "positive": 0.2522
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 93,
+      "category": "Informal Language",
+      "text": "nah this place is totally overrated",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 57.24,
+      "probabilities": {
+        "negative": 0.5724,
+        "neutral": 0.0458,
+        "positive": 0.3819
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 94,
+      "category": "Informal Language",
+      "text": "meh, neither good nor bad honestly",
+      "expected": "NEUTRAL",
+      "predicted": "NEGATIVE",
+      "confidence": 63.75,
+      "probabilities": {
+        "negative": 0.6375,
+        "neutral": 0.0941,
+        "positive": 0.2684
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 95,
+      "category": "Informal Language",
+      "text": "just checking in from the airport gate",
+      "expected": "NEUTRAL",
+      "predicted": "NEGATIVE",
+      "confidence": 44.13,
+      "probabilities": {
+        "negative": 0.4413,
+        "neutral": 0.208,
+        "positive": 0.3507
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 96,
+      "category": "Short Expressions",
+      "text": "Love it!",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 59.11,
+      "probabilities": {
+        "negative": 0.3424,
+        "neutral": 0.0665,
+        "positive": 0.5911
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 97,
+      "category": "Short Expressions",
+      "text": "Absolutely fantastic.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 78.1,
+      "probabilities": {
+        "negative": 0.1701,
+        "neutral": 0.0489,
+        "positive": 0.781
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 98,
+      "category": "Short Expressions",
+      "text": "Hate it.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 70.18,
+      "probabilities": {
+        "negative": 0.7018,
+        "neutral": 0.0262,
+        "positive": 0.2719
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 99,
+      "category": "Short Expressions",
+      "text": "Totally unacceptable.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 72.02,
+      "probabilities": {
+        "negative": 0.7202,
+        "neutral": 0.0362,
+        "positive": 0.2436
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 100,
+      "category": "Short Expressions",
+      "text": "Page number 42.",
+      "expected": "NEUTRAL",
+      "predicted": "NEGATIVE",
+      "confidence": 36.78,
+      "probabilities": {
+        "negative": 0.3678,
+        "neutral": 0.2871,
+        "positive": 0.3451
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 101,
+      "category": "Short Expressions",
+      "text": "Meeting at noon.",
+      "expected": "NEUTRAL",
+      "predicted": "NEUTRAL",
+      "confidence": 64.32,
+      "probabilities": {
+        "negative": 0.1947,
+        "neutral": 0.6432,
+        "positive": 0.1621
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 102,
+      "category": "Long Reviews",
+      "text": "From the opening scene to the emotional final credits, this film captured my heart. The cinematography was breathtaking, the orchestral score was hauntingly beautiful, and the lead actors delivered nuanced, career-defining performances. I left the cinema completely awestruck.",
+      "expected": "POSITIVE",
+      "predicted": "POSITIVE",
+      "confidence": 92.46,
+      "probabilities": {
+        "negative": 0.067,
+        "neutral": 0.0084,
+        "positive": 0.9246
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 103,
+      "category": "Long Reviews",
+      "text": "I regret buying this appliance. The build quality feels cheap and fragile, the instructions were incomprehensible, and the unit stopped functioning after two days. Customer support refused to issue a replacement and kept putting me on hold for hours. Extremely disappointed and angry.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 92.18,
+      "probabilities": {
+        "negative": 0.9218,
+        "neutral": 0.0068,
+        "positive": 0.0714
+      },
+      "status": "PASS",
+      "is_correct": true
+    },
+    {
+      "id": 104,
+      "category": "Long Reviews",
+      "text": "The research seminar covered four principal modules in computer vision. Participants were provided with copies of the presentation slides and related academic citations. The session concluded at five in the afternoon following an interactive question and answer period with the faculty.",
+      "expected": "NEUTRAL",
+      "predicted": "NEGATIVE",
+      "confidence": 68.25,
+      "probabilities": {
+        "negative": 0.6825,
+        "neutral": 0.0855,
+        "positive": 0.232
+      },
+      "status": "FAIL",
+      "is_correct": false
+    },
+    {
+      "id": 105,
+      "category": "Long Reviews",
+      "text": "This product arrived in a damaged cardboard box. The exterior plastic was scratched and one of the key components was missing entirely. When I contacted the vendor, they showed no willingness to resolve the issue and claimed the package was delivered intact. Never buying from them again.",
+      "expected": "NEGATIVE",
+      "predicted": "NEGATIVE",
+      "confidence": 68.29,
+      "probabilities": {
+        "negative": 0.6829,
+        "neutral": 0.0197,
+        "positive": 0.2974
+      },
+      "status": "PASS",
+      "is_correct": true
+    }
+  ]
+}

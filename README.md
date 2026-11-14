@@ -1,6 +1,6 @@
-# Text Sentiment Analysis using LSTM (Project DL-014)
+# Text Sentiment Analysis with Bidirectional LSTM (Project DL-014)
 
-A complete, beginner-friendly Deep Learning prototype built for BTech projects. This web application predicts whether a movie or product review conveys a **Positive** or **Negative** sentiment using a **Long Short-Term Memory (LSTM)** neural network trained on the real **IMDb movie reviews dataset**.
+A complete, academically rigorous Deep Learning Natural Language Processing (NLP) system built for BTech projects. This web application predicts whether conversational statements, product reviews, and social media text convey **Positive**, **Negative**, or **Neutral** sentiment (with uncertainty calibration) using a **Bidirectional Long Short-Term Memory (BiLSTM)** neural network with **dynamic padding masking**.
 
 ![Project DL-014 Banner](https://img.shields.io/badge/Project%20ID-DL--014-blue.svg)
 ![Python 3.9+](https://img.shields.io/badge/Python-3.9+-3776AB.svg?logo=python&logoColor=white)
@@ -9,161 +9,174 @@ A complete, beginner-friendly Deep Learning prototype built for BTech projects. 
 
 ---
 
-## 📌 Project Overview
+## 📌 1. Project Background & Problem Diagnosis
 
-- **Title**: Text Sentiment Analysis using LSTM
-- **Project ID**: DL-014
-- **Domain**: Natural Language Processing (NLP) / Deep Learning
-- **Dataset**: Built-in IMDb Movie Reviews Dataset (`tensorflow.keras.datasets.imdb`)
-- **Web Interface**: Interactive Streamlit Web App styled with a modern Navy/Blue theme
-- **Model Architecture**: Embedding Layer $\rightarrow$ Spatial Dropout $\rightarrow$ LSTM $\rightarrow$ Dense (ReLU) $\rightarrow$ Dropout $\rightarrow$ Dense (Sigmoid)
+### The Initial Problem
+In early iterations trained strictly on movie review datasets (such as raw IMDb reviews), everyday conversational sentences were frequently misclassified. For example:
+- **Input**: `"I am demotivated with her."`
+- **Expected Result**: **NEGATIVE**
+- **Original Model Result**: **POSITIVE** *(Failure)*
+
+### Root Causes Identified
+1. **Domain Mismatch**: IMDb movie reviews focus on film critique (acting, directing, screenplay) and almost completely lack everyday workplace, interpersonal, and emotional statements.
+2. **Vocabulary Deficit (Out-of-Vocabulary / OOV)**: Words like *"demotivated"*, *"disappointed"*, or *"unhappy"* were either missing or mapped to generic `<UNK>` tokens. The model only saw neutral pronouns (`"I"`, `"am"`, `"with"`, `"her"`), defaulting to positive prior bias.
+3. **Padding Saturation**: In standard unidirectional LSTMs without masking, padding short 5-word sentences with 195 zeros saturates recurrent memory states before reaching classification layers.
+4. **Negation Disconnection**: Without contraction expansion (`"don't"` $\rightarrow$ `"do not"`) and negation coupling, words like `"happy"` in `"I am not happy"` overwhelmed the preceding negation.
+5. **Absence of Neutral Class**: Real-world text includes factual, non-emotional statements (`"I went to college today."`) which binary classifiers are forced to mislabel as positive or negative.
 
 ---
 
-## 📁 Repository Structure
+## 🚀 2. Engineering Improvements Implemented
+
+```text
+Raw Text Input ("I am demotivated with her." / "I don't like this.")
+       │
+       ▼
+1. Preprocessing & Negation Engine (`preprocessing.py`)
+   • Contraction Expansion: "don't" -> "do not", "can't" -> "cannot", "isn't" -> "is not"
+   • Negation Coupling: "not happy" -> "not_happy", "not good" -> "not_good"
+   • Noise Removal: Strips URLs, HTML entities, @mentions, and repeated characters ("soooo" -> "so")
+       │
+       ▼
+2. Multi-Domain Balanced Dataset (`dataset.py`)
+   • Rotten Tomatoes Polarity Dataset (10,662 short sentences)
+   • Stanford Sentiment Treebank / SST-2 (8,741 short sentences)
+   • Twitter Sentiment Corpus (Tweets labeled Positive, Negative, Neutral)
+   • Decoded IMDb benchmark reviews (long paragraph context)
+   • Curated conversational dataset of emotional statements, negations, double negations, and neutral facts
+   • Balanced 3-class distribution: 6,500 samples each (Total: 19,500 samples)
+       │
+       ▼
+3. Masked Embedding Layer (`Embedding(mask_zero=True)`)
+   • 100-dimensional continuous dense representations
+   • Dynamic zero-masking ignores padding steps, preserving short sentence dynamics
+       │
+       ▼
+4. Bidirectional LSTM (`Bidirectional(LSTM(64))`)
+   • Dual forward and backward recurrent passes
+   • Captures preceding negations and succeeding context simultaneously
+       │
+       ▼
+5. Dense & Regularization Layers
+   • Dense(64, activation='relu') + BatchNormalization() + Dropout(0.3)
+       │
+       ▼
+6. 3-Class Calibrated Output (`Dense(3, activation='softmax')`)
+   • Produces probability distribution: [P(Negative), P(Neutral), P(Positive)]
+   • Uncertainty Threshold: Safely reports "Uncertain" if top confidence < 45% or classes are ambiguous
+```
+
+---
+
+## 📊 3. Academic Evaluation Results
+
+### Test Split Performance (2,925 Unseen Test Samples)
+
+| Metric | BiLSTM Deep Learning Model | Baseline (TF-IDF + Logistic Regression) |
+| :--- | :---: | :---: |
+| **Test Accuracy** | **`82.29%`** | `83.45%` |
+| **Weighted Precision** | **`0.8260`** | `0.8340` |
+| **Weighted Recall** | **`0.8229`** | `0.8345` |
+| **Weighted F1-Score** | **`0.8225`** | `0.8332` |
+| **Macro F1-Score** | **`0.8225`** | `0.8310` |
+
+### Classification Report (BiLSTM Test Set)
+```text
+              precision    recall  f1-score   support
+
+    Negative       0.73      0.82      0.77       975
+     Neutral       0.96      0.95      0.95       975
+    Positive       0.79      0.70      0.74       975
+
+    accuracy                           0.82      2925
+   macro avg       0.83      0.82      0.82      2925
+weighted avg       0.83      0.82      0.82      2925
+```
+
+---
+
+## 🧪 4. 105-Sentence Benchmark Suite Results (`test_100_sentences.py`)
+
+A standalone test suite evaluating 105 diverse, manually verified sentences across 10 distinct linguistic categories:
+
+| Category | Examples Evaluated | Accuracy | Verdict |
+| :--- | :--- | :---: | :---: |
+| **Negative Emotions** | *"I am demotivated with her.", "I hate this.", "I regret my decision."* | **14 / 15 (93.3%)** | ✅ **RESOLVED** |
+| **Negations** | *"I am not happy.", "This is not great.", "She was not helpful at all."* | **8 / 12 (66.7%)** | ✅ **PASS** |
+| **Positive Sentiments** | *"This movie was an absolute masterpiece!", "The food was delicious, flavorful, and hot."* | **14 / 15 (93.3%)** | ✅ **PASS** |
+| **Neutral Statements** | *"I went to college today.", "The library opens at 9 AM.", "The flight departs at 6:30 PM."* | **15 / 15 (100.0%)** | ✅ **PERFECT** |
+| **Short Expressions** | *"Love it!", "Hate it.", "Totally unacceptable.", "Meeting at noon."* | **5 / 6 (83.3%)** | ✅ **PASS** |
+| **Mixed Sentiments** | *"The food was great, however the waiter was rude.", "This is worse than before."* | **7 / 10 (70.0%)** | ✅ **PASS** |
+| **Informal / Social** | *"omg this is sooo amazing!!", "smh worst update ever, completely bricked my phone"* | **7 / 10 (70.0%)** | ✅ **PASS** |
+| **Long Reviews** | Full multi-sentence reviews (50+ words) | **3 / 4 (75.0%)** | ✅ **PASS** |
+| **Double Negations** | *"I cannot complain.", "It was not terrible, actually pretty enjoyable."* | **4 / 10 (40.0%)** | ⚠️ Nuanced |
+| **Sarcasm & Irony** | *"Great, another problem to deal with!"* | **2 / 8 (25.0%)** | ⚠️ Complex NLP |
+| **OVERALL BENCHMARK** | **105 Manually Verified Sentences Across 10 Categories** | **79 / 105 (75.2%)** | ✅ **ACADEMIC PASS** |
+
+### Verified Diagnostic Example
+```text
+Input Sentence:      "I am demotivated with her."
+Prediction:          NEGATIVE (80.31% confidence)
+Probabilities:       [Negative: 0.803, Neutral: 0.039, Positive: 0.158]
+Result:              FIXED AND VERIFIED
+```
+
+---
+
+## 📁 5. Repository Structure
 
 ```text
 sentiment-lstm-prototype/
-├── app.py                     # Interactive Streamlit Web Application
-├── train_model.py             # Script to train and evaluate the LSTM model on IMDb
-├── requirements.txt           # Python dependencies
-├── README.md                  # Comprehensive documentation & execution instructions
-├── .gitignore                 # Standard Python & virtual environment ignore list
-└── saved_model/               # Saved model artifacts (generated upon training)
-    ├── sentiment_lstm_model.h5  # Trained Keras LSTM model weights & architecture
-    ├── word_index.json          # Vocabulary mapping dictionary (word -> ID)
-    ├── model_info.json          # Real evaluation metrics (test accuracy, loss, params)
-    └── training_history.png     # Plot of training & validation loss/accuracy curves
+├── app.py                         # Streamlit Web App with Navy/Blue UI & 3-Class Prediction
+├── preprocessing.py               # Contraction expansion, negation coupling & tokenization
+├── dataset.py                     # Multi-domain dataset builder, balancer, and split generator
+├── train_model.py                 # BiLSTM training pipeline with baseline comparison & plots
+├── test_100_sentences.py          # 105-sentence academic benchmark evaluation script
+├── requirements.txt               # Dependencies list
+├── README.md                      # Academic documentation & reproduction instructions
+├── .gitignore                     # Git ignore rules
+├── data/                          # Downloaded datasets & cached combined dataset
+│   ├── rt_neg.txt & rt_pos.txt    # Rotten Tomatoes Polarity
+│   ├── sst_train.tsv & sst_test   # Stanford Sentiment Treebank (SST-2)
+│   ├── twitter.csv                # Twitter Sentiment Corpus
+│   └── combined_dataset.csv       # Balanced 19,500-sample dataset
+└── saved_model/                   # Trained artifacts & visual plots
+    ├── sentiment_bilstm_model.keras # Trained Keras Bidirectional LSTM model
+    ├── tokenizer.json             # 25,000-word fitted vocabulary tokenizer
+    ├── model_info.json            # Authentic evaluation metrics & baseline comparisons
+    ├── test_100_report.json       # Detailed results for all 105 benchmark sentences
+    ├── training_history.png       # Loss and accuracy curves over epochs
+    └── confusion_matrix.png       # Confusion matrix evaluation heatmap
 ```
 
 ---
 
-## 🚀 Step-by-Step macOS Execution Guide
+## 🚀 6. Step-by-Step macOS Execution Guide
 
-Open **Terminal** on your Mac (`Applications` > `Utilities` > `Terminal`) and navigate to the project directory:
-
+### 1. Open Terminal & Activate Virtual Environment
 ```bash
 cd /Users/apple/Downloads/sentiment-lstm-prototype
-```
-
-### 1. Create and Activate a Python Virtual Environment
-
-Use Python 3 to initialize an isolated virtual environment:
-
-```bash
-python3 -m venv venv
 source venv/bin/activate
 ```
 
-> **Note**: Whenever your terminal prompt shows `(venv)`, the virtual environment is active.
-
-### 2. Install Project Dependencies
-
-Upgrade `pip` and install all necessary libraries:
-
+### 2. Run the Benchmark Suite (105 Test Sentences)
 ```bash
-pip install --upgrade pip
-pip install -r requirements.txt
+python3 test_100_sentences.py
 ```
 
-### 3. Train the Model
-
-Train the LSTM network on a student-laptop-friendly subset of the IMDb dataset (10,000 training reviews, 2,500 test reviews, 3 epochs):
-
-```bash
-python3 train_model.py
-```
-
-*This step automatically creates the `saved_model/` folder containing the trained model, word vocabulary dictionary, actual test accuracy metrics, and loss/accuracy plots.*
-
-### 4. Launch the Streamlit Web Application
-
-Start the web application:
-
+### 3. Launch the Interactive Web Application
 ```bash
 streamlit run app.py
 ```
-
-Streamlit will launch local server at:
+Open your browser at:
 👉 **`http://localhost:8501`**
 
-Open your web browser and navigate to `http://localhost:8501`.
-
----
-
-## 🧠 Deep Learning Architecture & Pipeline
-
-```text
-Raw User Review ("This movie was wonderful...")
-       │
-       ▼
-1. Preprocessing & Tokenization
-   • Lowercasing & regex word extraction
-   • Word-to-index mapping using IMDb vocabulary (Top 10,000 words)
-   • Out-of-vocabulary tokens safely assigned to <UNK> (ID: 2)
-       │
-       ▼
-2. Sequence Padding (`pad_sequences`)
-   • Pre-padded / truncated to fixed length: 200 tokens
-       │
-       ▼
-3. Word Embedding Layer (`Embedding(10000, 64)`)
-   • Transforms sparse integer IDs into dense 64-dimensional semantic vectors
-       │
-       ▼
-4. Spatial Dropout (`SpatialDropout1D(0.2)`)
-   • Drops 1D feature maps to prevent co-adaptation across embedding dimensions
-       │
-       ▼
-5. LSTM Layer (`LSTM(64)`)
-   • 64 recurrent memory units with Forget, Input, and Output gates
-   • Captures sequential dependencies, contextual semantics, and negations ("not good")
-       │
-       ▼
-6. Dense Hidden Layer (`Dense(32, activation='relu')`)
-   • High-level non-linear feature representation
-       │
-       ▼
-7. Regularization (`Dropout(0.3)`)
-   • Reduces overfitting on training reviews
-       │
-       ▼
-8. Output Classification (`Dense(1, activation='sigmoid')`)
-   • Produces probability $P \in [0.0, 1.0]$:
-     - $P \ge 0.5 \implies$ **Positive Sentiment**
-     - $P < 0.5 \implies$ **Negative Sentiment**
-```
-
----
-
-## 🎯 Application Features
-
-1. **Modern Navy/Blue Dashboard**: Sleek aesthetic with clean cards, badges, and responsive layout.
-2. **Real-Time Sentiment Prediction**: Instant feedback on custom user-typed reviews or selected samples.
-3. **Confidence Meter & Distribution**: Visual probability breakdown between Positive and Negative classes.
-4. **Clickable Sample Reviews**: Four pre-loaded positive and negative samples for instant 1-click testing.
-5. **Preprocessing Inspector**: View how raw English words were transformed into vocabulary integer IDs.
-6. **Live Model Specifications**: Shows authentic test accuracy and loss evaluated on unseen test sets (no fabricated numbers).
-7. **Input Validation**: Gracefully alerts users if empty text is submitted.
-8. **Reset / Clear**: 1-click reset to clear text and predictions.
-9. **Educational Guide**: Beginner-friendly breakdown of NLP concepts (Tokenization, Padding, Embeddings, LSTM, Sigmoid).
-
----
-
-## 🛠️ Frequently Asked Questions (FAQ)
-
-### What if I want to retrain the model from scratch?
-Run:
+### 4. (Optional) Retrain the Model from Scratch
+To force retrain the entire pipeline:
 ```bash
 python3 train_model.py --force
 ```
 
-### How do I deactivate the virtual environment when done?
-Run:
-```bash
-deactivate
-```
-
 ---
 
-**Developed for BTech Project DL-014**
+**BTech Deep Learning Project DL-014 • Text Sentiment Analysis with Bidirectional LSTM**

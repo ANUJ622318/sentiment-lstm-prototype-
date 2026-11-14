@@ -1,157 +1,126 @@
 """
-Text Sentiment Analysis using LSTM
-Project ID: DL-014
+Text Sentiment Analysis with Bidirectional LSTM (Project DL-014)
 
 train_model.py
 --------------
-This script trains a Long Short-Term Memory (LSTM) deep learning model
-on the IMDb movie-review dataset to classify sentiment as Positive or Negative.
+Trains a deep Bidirectional LSTM model for 3-class sentiment analysis:
+  0: Negative
+  1: Neutral
+  2: Positive
 
-Features:
-- Uses TensorFlow/Keras built-in IMDb dataset (no manual downloads needed).
-- Manageable dataset subset configured by default for fast, smooth training on standard laptops.
-- Fixed random seed for reproducibility.
-- Saves the trained model, word-to-index vocabulary dictionary, and training metrics locally.
+Key Improvements:
+1. Multi-Domain Balanced Dataset: Combines Rotten Tomatoes, SST-2, Twitter Sentiment,
+   decoded IMDb reviews, and curated everyday conversational emotional statements.
+2. Robust Preprocessing: Contraction expansion ("don't" -> "do not"), negation preservation,
+   repeated character normalization, and clean tokenization.
+3. Bidirectional LSTM Architecture: Dual-direction recurrent memory cells capture preceding
+   and succeeding context (crucial for negations like "I am not happy").
+4. Masking (mask_zero=True): Dynamically masks padding tokens so short conversational sentences
+   ("I am demotivated with her.") are not overwhelmed by padding.
+5. Baseline Comparison: Trains a TF-IDF + Logistic Regression classifier on identical data
+   for academic rigor and comparative benchmarking.
+6. Exhaustive Evaluation: Produces Accuracy, Weighted/Macro Precision, Recall, F1-scores,
+   Confusion Matrix plot, and Loss/Accuracy curves.
 """
 
 import os
 import sys
 
-# Configure environment before imports to silence verbose logs and set writable cache paths
+# Silence verbose TF warnings and configure writable cache
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
 os.environ["KERAS_HOME"] = "/tmp/keras"
 
-import re
 import json
 import random
 import argparse
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")  # Non-interactive backend for headless environments
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import tensorflow as tf
-from tensorflow.keras.datasets import imdb
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, SpatialDropout1D
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-# Set random seeds for reproducibility
+from sklearn.metrics import (
+    accuracy_score, precision_recall_fscore_support,
+    classification_report, confusion_matrix
+)
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.utils.class_weight import compute_class_weight
+
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import (
+    Embedding, Bidirectional, LSTM, Dense,
+    Dropout, SpatialDropout1D, BatchNormalization
+)
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+
+from dataset import get_train_val_test_splits, LABEL_MAP
+from preprocessing import (
+    create_tokenizer, save_tokenizer,
+    texts_to_padded_sequences, MAX_SEQUENCE_LENGTH, MAX_VOCAB_SIZE
+)
+
+# Set random seed for reproducibility
 SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 tf.random.set_seed(SEED)
 
 # Hyperparameters
-MAX_VOCAB = 10000          # Top 10,000 words in vocabulary
-MAX_LEN = 200              # Sequence length (cut/pad reviews to 200 tokens)
-EMBEDDING_DIM = 64         # Word vector dimension
-LSTM_UNITS = 64            # Number of LSTM memory cells
-BATCH_SIZE = 64            # Training batch size
-DEFAULT_EPOCHS = 3         # Quick and effective for student laptops
-DEFAULT_TRAIN_SIZE = 10000 # Student-friendly subset (out of 25,000)
-DEFAULT_TEST_SIZE = 2500   # Student-friendly evaluation subset
+EMBEDDING_DIM = 100
+LSTM_UNITS = 64
+DENSE_UNITS = 64
+DROPOUT_RATE = 0.3
+BATCH_SIZE = 64
+DEFAULT_EPOCHS = 6
 
-# Directory paths
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "saved_model")
-MODEL_FILE = os.path.join(MODEL_DIR, "sentiment_lstm_model.keras")
-WORD_INDEX_FILE = os.path.join(MODEL_DIR, "word_index.json")
-METRICS_FILE = os.path.join(MODEL_DIR, "model_info.json")
-HISTORY_PLOT_FILE = os.path.join(MODEL_DIR, "training_history.png")
+# Paths
+SAVED_MODEL_DIR = os.path.join(os.path.dirname(__file__), "saved_model")
+MODEL_FILE = os.path.join(SAVED_MODEL_DIR, "sentiment_bilstm_model.keras")
+TOKENIZER_FILE = os.path.join(SAVED_MODEL_DIR, "tokenizer.json")
+METRICS_FILE = os.path.join(SAVED_MODEL_DIR, "model_info.json")
+HISTORY_PLOT_FILE = os.path.join(SAVED_MODEL_DIR, "training_history.png")
+CONFUSION_MATRIX_FILE = os.path.join(SAVED_MODEL_DIR, "confusion_matrix.png")
 
 
-def build_and_save_tokenizer():
+def build_bilstm_model(vocab_size=MAX_VOCAB_SIZE, embedding_dim=EMBEDDING_DIM, max_len=MAX_SEQUENCE_LENGTH):
     """
-    Extracts the IMDb word index and creates a clean word-to-id mapping
-    accounting for Keras special offset tokens:
-      0: <PAD>
-      1: <START>
-      2: <UNK>
-      3: <UNUSED>
+    Constructs the Bidirectional LSTM neural network architecture with masking:
+      1. Embedding (mask_zero=True): Ignores padding tokens across variable lengths.
+      2. SpatialDropout1D: Drops 1D word feature maps for regularization.
+      3. Bidirectional LSTM: Reads sequence in forward and backward directions.
+      4. Dense + BatchNormalization + ReLU: High-level contextual synthesis.
+      5. Dropout (0.3): Regularization against overfitting.
+      6. Dense (3, softmax): 3-class probability distribution.
     """
-    print("[1/5] Preparing word vocabulary mapping from IMDb dataset...")
-    raw_word_index = imdb.get_word_index()
-
-    # Keras offset: actual tokens in sequences are offset by 3
-    word_to_id = {
-        "<PAD>": 0,
-        "<START>": 1,
-        "<UNK>": 2,
-    }
-
-    for word, rank in raw_word_index.items():
-        token_id = rank + 3
-        if token_id < MAX_VOCAB:
-            word_to_id[word] = token_id
-
-    os.makedirs(MODEL_DIR, exist_ok=True)
-    with open(WORD_INDEX_FILE, "w", encoding="utf-8") as f:
-        json.dump(word_to_id, f, indent=2)
-
-    print(f"      Saved vocabulary ({len(word_to_id):,} tokens) to: {WORD_INDEX_FILE}")
-    return word_to_id
-
-
-def load_dataset(train_size=DEFAULT_TRAIN_SIZE, test_size=DEFAULT_TEST_SIZE):
-    """
-    Loads IMDb dataset with fixed vocabulary size and cuts/pads sequences to MAX_LEN.
-    Uses a representative subset for student laptop friendly training.
-    """
-    print(f"[2/5] Loading IMDb dataset (subset: {train_size:,} train, {test_size:,} test)...")
-    (x_train_raw, y_train_raw), (x_test_raw, y_test_raw) = imdb.load_data(
-        num_words=MAX_VOCAB,
-        index_from=3
-    )
-
-    # Slice manageable subsets
-    x_train_sub = x_train_raw[:train_size]
-    y_train_sub = y_train_raw[:train_size]
-    x_test_sub = x_test_raw[:test_size]
-    y_test_sub = y_test_raw[:test_size]
-
-    # Pad sequences to fixed length (pre-padding is standard in NLP)
-    x_train = pad_sequences(x_train_sub, maxlen=MAX_LEN, padding="pre", truncating="pre")
-    x_test = pad_sequences(x_test_sub, maxlen=MAX_LEN, padding="pre", truncating="pre")
-    y_train = np.array(y_train_sub, dtype=np.float32)
-    y_test = np.array(y_test_sub, dtype=np.float32)
-
-    print(f"      Training samples shape: {x_train.shape}")
-    print(f"      Testing samples shape:  {x_test.shape}")
-    return x_train, y_train, x_test, y_test
-
-
-def build_lstm_model(vocab_size=MAX_VOCAB, embedding_dim=EMBEDDING_DIM, lstm_units=LSTM_UNITS):
-    """
-    Builds the Sequential LSTM neural network architecture:
-      1. Embedding Layer: Maps word indices into dense continuous vectors.
-      2. SpatialDropout1D: Prevents feature co-adaptation across embeddings.
-      3. LSTM Layer: Recurrent cells with forget/input/output gates for context memory.
-      4. Dense Hidden Layer + ReLU: High-level non-linear feature combination.
-      5. Dropout Layer: Regularization to avoid overfitting.
-      6. Output Layer + Sigmoid: Probability of positive sentiment (0 to 1).
-    """
-    print("[3/5] Constructing LSTM neural network architecture...")
+    print("[3/6] Constructing Bidirectional LSTM Architecture with Masking...")
     model = Sequential([
         Embedding(
             input_dim=vocab_size,
             output_dim=embedding_dim,
-            name="word_embedding"
+            mask_zero=True,
+            name="word_embedding_with_mask"
         ),
         SpatialDropout1D(0.2, name="spatial_dropout"),
-        LSTM(
-            lstm_units,
-            dropout=0.2,
-            recurrent_dropout=0.0,
-            name="lstm_layer"
+        Bidirectional(
+            LSTM(
+                LSTM_UNITS,
+                dropout=0.2,
+                recurrent_dropout=0.0,
+                return_sequences=False
+            ),
+            name="bidirectional_lstm"
         ),
-        Dense(32, activation="relu", name="dense_hidden"),
-        Dropout(0.3, name="dropout_regularization"),
-        Dense(1, activation="sigmoid", name="output_sigmoid")
-    ], name="IMDb_Sentiment_LSTM")
+        Dense(DENSE_UNITS, activation="relu", name="dense_representation"),
+        BatchNormalization(name="batch_norm"),
+        Dropout(DROPOUT_RATE, name="dropout_regularization"),
+        Dense(3, activation="softmax", name="sentiment_output_3class")
+    ], name="BiLSTM_Sentiment_Classifier")
 
     model.compile(
-        optimizer="adam",
-        loss="binary_crossentropy",
+        optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+        loss="sparse_categorical_crossentropy",
         metrics=["accuracy"]
     )
 
@@ -159,32 +128,68 @@ def build_lstm_model(vocab_size=MAX_VOCAB, embedding_dim=EMBEDDING_DIM, lstm_uni
     return model
 
 
-def clean_and_tokenize_text(text, word_to_id, max_len=MAX_LEN):
+def train_baseline_model(X_train, y_train, X_test, y_test):
     """
-    Helper function to preprocess raw user review text consistently with training data:
-    1. Lowercase text.
-    2. Extract word tokens using regular expression.
-    3. Look up token IDs in vocabulary (fallback to <UNK> = 2).
-    4. Prepend <START> token (1).
-    5. Pad or truncate sequence to max_len.
+    Trains a TF-IDF + Logistic Regression model as an academic baseline for comparison.
     """
-    text_clean = text.lower()
-    tokens = re.findall(r"[a-z0-9']+", text_clean)
-    if not tokens:
-        return np.zeros((1, max_len), dtype=np.int32)
+    print("\n[Baseline] Training TF-IDF + Logistic Regression comparison model...")
+    tfidf = TfidfVectorizer(max_features=10000, ngram_range=(1, 2))
+    X_train_vec = tfidf.fit_transform(X_train)
+    X_test_vec = tfidf.transform(X_test)
 
-    token_ids = [1]  # <START> token
-    for t in tokens:
-        token_ids.append(word_to_id.get(t, 2))  # 2 is <UNK>
+    clf = LogisticRegression(max_iter=1000, random_state=SEED)
+    clf.fit(X_train_vec, y_train)
 
-    padded = pad_sequences([token_ids], maxlen=max_len, padding="pre", truncating="pre")
-    return padded
+    y_pred = clf.predict(X_test_vec)
+    acc = accuracy_score(y_test, y_pred)
+    prec, rec, f1, _ = precision_recall_fscore_support(y_test, y_pred, average="weighted")
+
+    print(f"  → Baseline (TF-IDF + LogReg) Test Accuracy: {acc*100:.2f}% | F1: {f1:.4f}")
+    return {
+        "model_name": "TF-IDF + Logistic Regression (Baseline)",
+        "test_accuracy": float(acc),
+        "precision": float(prec),
+        "recall": float(rec),
+        "f1_score": float(f1)
+    }
 
 
-def plot_and_save_history(history):
-    """
-    Plots training and validation accuracy and loss curves and saves to disk.
-    """
+def plot_and_save_confusion_matrix(y_true, y_pred, class_names=["Negative", "Neutral", "Positive"]):
+    """Plots and saves confusion matrix heatmap."""
+    cm = confusion_matrix(y_true, y_pred)
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(cm, interpolation="nearest", cmap="Blues")
+    ax.figure.colorbar(im, ax=ax)
+
+    ax.set(
+        xticks=np.arange(cm.shape[1]),
+        yticks=np.arange(cm.shape[0]),
+        xticklabels=class_names,
+        yticklabels=class_names,
+        title="BiLSTM Confusion Matrix",
+        ylabel="True Label",
+        xlabel="Predicted Label"
+    )
+
+    thresh = cm.max() / 2.0
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(
+                j, i, format(cm[i, j], "d"),
+                ha="center", va="center",
+                color="white" if cm[i, j] > thresh else "black",
+                fontweight="bold"
+            )
+
+    fig.tight_layout()
+    plt.savefig(CONFUSION_MATRIX_FILE, dpi=150)
+    plt.close()
+    print(f"      Saved confusion matrix plot to: {CONFUSION_MATRIX_FILE}")
+    return cm.tolist()
+
+
+def plot_and_save_training_curves(history):
+    """Plots training and validation loss and accuracy curves."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
 
     # Accuracy Plot
@@ -194,7 +199,6 @@ def plot_and_save_history(history):
     ax1.set_title("Model Accuracy Over Epochs", fontsize=12, fontweight="bold")
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("Accuracy")
-    ax1.set_ylim([0.5, 1.0])
     ax1.legend(loc="lower right")
     ax1.grid(True, alpha=0.3)
 
@@ -211,94 +215,145 @@ def plot_and_save_history(history):
     plt.tight_layout()
     plt.savefig(HISTORY_PLOT_FILE, dpi=150)
     plt.close()
-    print(f"      Saved training history plot to: {HISTORY_PLOT_FILE}")
+    print(f"      Saved training curves to: {HISTORY_PLOT_FILE}")
 
 
-def train(epochs=DEFAULT_EPOCHS, train_size=DEFAULT_TRAIN_SIZE, test_size=DEFAULT_TEST_SIZE, force=False):
-    """
-    Main training routine.
-    """
-    if os.path.exists(MODEL_FILE) and os.path.exists(WORD_INDEX_FILE) and os.path.exists(METRICS_FILE) and not force:
-        print(f"✓ Model already exists at: {MODEL_FILE}")
+def train(epochs=DEFAULT_EPOCHS, force=False):
+    """Main training routine."""
+    os.makedirs(SAVED_MODEL_DIR, exist_ok=True)
+
+    if os.path.exists(MODEL_FILE) and os.path.exists(TOKENIZER_FILE) and os.path.exists(METRICS_FILE) and not force:
+        print(f"✓ Trained model already exists at: {MODEL_FILE}")
         with open(METRICS_FILE, "r", encoding="utf-8") as f:
             meta = json.load(f)
-        print(f"  Existing Model Test Accuracy: {meta.get('test_accuracy', 0)*100:.2f}%")
+        print(f"  BiLSTM Test Accuracy: {meta.get('test_accuracy', 0)*100:.2f}% | F1: {meta.get('f1_score_weighted', 0):.4f}")
         print("  Pass --force to retrain.")
         return
 
-    word_to_id = build_and_save_tokenizer()
-    x_train, y_train, x_test, y_test = load_dataset(train_size, test_size)
-    model = build_lstm_model()
+    # 1. Load dataset splits
+    print("[1/6] Loading multi-domain balanced dataset splits...")
+    (X_train_raw, y_train), (X_val_raw, y_val), (X_test_raw, y_test) = get_train_val_test_splits()
 
-    print(f"\n[4/5] Training LSTM model for {epochs} epochs...")
+    # 2. Fit and save tokenizer
+    print("[2/6] Building and saving vocabulary tokenizer...")
+    tokenizer = create_tokenizer(X_train_raw, vocab_size=MAX_VOCAB_SIZE)
+    save_tokenizer(tokenizer, TOKENIZER_FILE)
+    vocab_size_actual = len(tokenizer.word_index) + 1
+    print(f"      Fitted tokenizer with {len(tokenizer.word_index):,} unique tokens.")
+
+    # 3. Transform texts to padded sequence tensors
+    X_train_pad = texts_to_padded_sequences(X_train_raw, tokenizer, max_len=MAX_SEQUENCE_LENGTH)
+    X_val_pad = texts_to_padded_sequences(X_val_raw, tokenizer, max_len=MAX_SEQUENCE_LENGTH)
+    X_test_pad = texts_to_padded_sequences(X_test_raw, tokenizer, max_len=MAX_SEQUENCE_LENGTH)
+
+    # Compute class weights for balanced gradients
+    classes = np.unique(y_train)
+    weights = compute_class_weight(class_weight="balanced", classes=classes, y=y_train)
+    class_weights_dict = {c: float(w) for c, w in zip(classes, weights)}
+    print(f"      Computed class weights: {class_weights_dict}")
+
+    # 4. Build and train baseline model
+    baseline_metrics = train_baseline_model(X_train_raw, y_train, X_test_raw, y_test)
+
+    # 5. Build and train Bidirectional LSTM
+    model = build_bilstm_model(vocab_size=min(vocab_size_actual, MAX_VOCAB_SIZE))
+
+    callbacks = [
+        EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True, verbose=1),
+        ModelCheckpoint(filepath=MODEL_FILE, monitor="val_accuracy", save_best_only=True, verbose=1)
+    ]
+
+    print(f"\n[4/6] Training Bidirectional LSTM for {epochs} epochs...")
     history = model.fit(
-        x_train,
+        X_train_pad,
         y_train,
+        validation_data=(X_val_pad, y_val),
         batch_size=BATCH_SIZE,
         epochs=epochs,
-        validation_split=0.15,
+        class_weight=class_weights_dict,
+        callbacks=callbacks,
         verbose=1
     )
 
-    print("\n[5/5] Evaluating model on unseen test set...")
-    test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
-    print(f"      → Test Loss:     {test_loss:.4f}")
-    print(f"      → Test Accuracy: {test_acc * 100:.2f}%")
+    # 6. Comprehensive Test Evaluation
+    print("\n[5/6] Evaluating on unseen test set...")
+    test_loss, test_acc = model.evaluate(X_test_pad, y_test, verbose=0)
+    y_pred_probs = model.predict(X_test_pad, verbose=0)
+    y_pred = np.argmax(y_pred_probs, axis=1)
 
-    # Save trained model
-    os.makedirs(MODEL_DIR, exist_ok=True)
-    model.save(MODEL_FILE)
-    print(f"      ✓ Trained model saved to: {MODEL_FILE}")
+    precision_w, recall_w, f1_w, _ = precision_recall_fscore_support(y_test, y_pred, average="weighted")
+    precision_m, recall_m, f1_m, _ = precision_recall_fscore_support(y_test, y_pred, average="macro")
+    class_report_str = classification_report(y_test, y_pred, target_names=["Negative", "Neutral", "Positive"])
 
-    # Plot history
-    plot_and_save_history(history)
+    print("\n" + "=" * 60)
+    print("BI-DIRECTIONAL LSTM TEST EVALUATION REPORT:")
+    print("=" * 60)
+    print(f"Test Loss:             {test_loss:.4f}")
+    print(f"Test Accuracy:         {test_acc * 100:.2f}%")
+    print(f"Weighted Precision:    {precision_w:.4f}")
+    print(f"Weighted Recall:       {recall_w:.4f}")
+    print(f"Weighted F1-Score:     {f1_w:.4f}")
+    print(f"Macro F1-Score:        {f1_m:.4f}")
+    print("-" * 60)
+    print(class_report_str)
+    print("=" * 60)
 
-    # Save real metadata
+    # Save plots
+    print("\n[6/6] Generating evaluation plots & saving metadata...")
+    plot_and_save_training_curves(history)
+    cm_matrix = plot_and_save_confusion_matrix(y_test, y_pred)
+
+    # Save comprehensive metrics metadata
     metadata = {
         "project_id": "DL-014",
-        "project_title": "Text Sentiment Analysis using LSTM",
-        "dataset_name": "IMDb Large Movie Review Dataset (Keras built-in)",
-        "train_samples": int(train_size),
-        "test_samples": int(test_size),
-        "vocabulary_size": int(len(word_to_id)),
-        "max_sequence_length": MAX_LEN,
-        "embedding_dimensions": EMBEDDING_DIM,
-        "lstm_units": LSTM_UNITS,
-        "epochs_trained": int(epochs),
-        "batch_size": BATCH_SIZE,
+        "project_title": "Text Sentiment Analysis with Bidirectional LSTM",
+        "architecture": "Embedding (mask_zero=True) -> SpatialDropout1D -> BiLSTM(64) -> Dense(64) -> BatchNorm -> Dropout(0.3) -> Dense(3, Softmax)",
+        "dataset_description": "Multi-domain balanced dataset (Rotten Tomatoes, SST-2, Twitter Sentiment, IMDb decoded reviews, and curated everyday emotional/negation sentences)",
+        "classes": ["Negative", "Neutral", "Positive"],
+        "num_classes": 3,
+        "train_samples": int(len(X_train_pad)),
+        "val_samples": int(len(X_val_pad)),
+        "test_samples": int(len(X_test_pad)),
+        "vocab_size": int(min(vocab_size_actual, MAX_VOCAB_SIZE)),
+        "max_sequence_length": MAX_SEQUENCE_LENGTH,
+        "epochs_trained": int(len(history.history["loss"])),
         "test_loss": float(test_loss),
         "test_accuracy": float(test_acc),
-        "final_train_loss": float(history.history["loss"][-1]),
-        "final_train_accuracy": float(history.history["accuracy"][-1]),
-        "final_val_loss": float(history.history["val_loss"][-1]) if "val_loss" in history.history else None,
-        "final_val_accuracy": float(history.history["val_accuracy"][-1]) if "val_accuracy" in history.history else None,
+        "precision_weighted": float(precision_w),
+        "recall_weighted": float(recall_w),
+        "f1_score_weighted": float(f1_w),
+        "f1_score_macro": float(f1_m),
+        "confusion_matrix": cm_matrix,
+        "baseline_comparison": baseline_metrics
     }
 
     with open(METRICS_FILE, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
-    print(f"      ✓ Metadata & metrics saved to: {METRICS_FILE}")
 
-    # Quick sanity check with sample reviews
-    print("\n--- Model Verification Sanity Check ---")
-    samples = [
-        "This movie was an absolute masterpiece! The plot was gripping and the performances were sensational.",
-        "A truly awful film. The pacing dragged endlessly and the dialogue was completely cringe-worthy."
-    ]
-    for sample in samples:
-        padded = clean_and_tokenize_text(sample, word_to_id, MAX_LEN)
-        prob = float(model.predict(padded, verbose=0)[0][0])
-        sentiment = "Positive" if prob >= 0.5 else "Negative"
-        confidence = prob * 100 if prob >= 0.5 else (1 - prob) * 100
-        print(f"Review: \"{sample[:60]}...\"")
-        print(f"Prediction: {sentiment} ({confidence:.2f}% confidence)\n")
+    print(f"✓ Model saved to:    {MODEL_FILE}")
+    print(f"✓ Tokenizer to:      {TOKENIZER_FILE}")
+    print(f"✓ Metadata to:       {METRICS_FILE}")
+
+    # Immediate verification on user's problematic sentence
+    print("\n--- Diagnostic Check: User Problematic Example ---")
+    problem_sentence = "I am demotivated with her."
+    pad_prob = texts_to_padded_sequences([problem_sentence], tokenizer, max_len=MAX_SEQUENCE_LENGTH)
+    prob_vec = model.predict(pad_prob, verbose=0)[0]
+    pred_class = LABEL_MAP[int(np.argmax(prob_vec))]
+    conf = float(np.max(prob_vec)) * 100.0
+    print(f"Input: \"{problem_sentence}\"")
+    print(f"Prediction: {pred_class} ({conf:.2f}% confidence)")
+    print(f"Class Probabilities: [Neg: {prob_vec[0]:.3f}, Neu: {prob_vec[1]:.3f}, Pos: {prob_vec[2]:.3f}]")
+    if pred_class == "Negative":
+        print(">>> SUCCESS: Fixed underlying prediction failure! <<<")
+    else:
+        print(">>> WARNING: Still not predicting Negative. Further tuning needed. <<<")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train LSTM Sentiment Analysis Model on IMDb Dataset")
+    parser = argparse.ArgumentParser(description="Train BiLSTM Sentiment Analysis Model")
     parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS, help="Number of epochs to train")
-    parser.add_argument("--train_size", type=int, default=DEFAULT_TRAIN_SIZE, help="Number of training samples")
-    parser.add_argument("--test_size", type=int, default=DEFAULT_TEST_SIZE, help="Number of testing samples")
     parser.add_argument("--force", action="store_true", help="Force retrain even if model files exist")
     args = parser.parse_args()
 
-    train(epochs=args.epochs, train_size=args.train_size, test_size=args.test_size, force=args.force)
+    train(epochs=args.epochs, force=args.force)

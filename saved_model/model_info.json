@@ -1,19 +1,48 @@
 {
   "project_id": "DL-014",
-  "project_title": "Text Sentiment Analysis using LSTM",
-  "dataset_name": "IMDb Large Movie Review Dataset (Keras built-in)",
-  "train_samples": 10000,
-  "test_samples": 2500,
-  "vocabulary_size": 9999,
-  "max_sequence_length": 200,
-  "embedding_dimensions": 64,
-  "lstm_units": 64,
-  "epochs_trained": 3,
-  "batch_size": 64,
-  "test_loss": 0.414399653673172,
-  "test_accuracy": 0.8375999927520752,
-  "final_train_loss": 0.2264956384897232,
-  "final_train_accuracy": 0.9143529534339905,
-  "final_val_loss": 0.34505724906921387,
-  "final_val_accuracy": 0.8733333349227905
+  "project_title": "Text Sentiment Analysis with Bidirectional LSTM",
+  "architecture": "Embedding (mask_zero=True) -> SpatialDropout1D -> BiLSTM(64) -> Dense(64) -> BatchNorm -> Dropout(0.3) -> Dense(3, Softmax)",
+  "dataset_description": "Multi-domain balanced dataset (Rotten Tomatoes, SST-2, Twitter Sentiment, IMDb decoded reviews, and curated everyday emotional/negation sentences)",
+  "classes": [
+    "Negative",
+    "Neutral",
+    "Positive"
+  ],
+  "num_classes": 3,
+  "train_samples": 13650,
+  "val_samples": 2925,
+  "test_samples": 2925,
+  "vocab_size": 24047,
+  "max_sequence_length": 120,
+  "epochs_trained": 5,
+  "test_loss": 0.47055360674858093,
+  "test_accuracy": 0.822905957698822,
+  "precision_weighted": 0.8259547744927015,
+  "recall_weighted": 0.8229059829059829,
+  "f1_score_weighted": 0.8224923210035282,
+  "f1_score_macro": 0.8224923210035282,
+  "confusion_matrix": [
+    [
+      801,
+      16,
+      158
+    ],
+    [
+      27,
+      927,
+      21
+    ],
+    [
+      271,
+      25,
+      679
+    ]
+  ],
+  "baseline_comparison": {
+    "model_name": "TF-IDF + Logistic Regression (Baseline)",
+    "test_accuracy": 0.8345299145299145,
+    "precision": 0.8323817654028526,
+    "recall": 0.8345299145299145,
+    "f1_score": 0.8331722211068007
+  }
 }

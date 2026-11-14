@@ -1,11 +1,12 @@
 """
-Text Sentiment Analysis using LSTM
+Text Sentiment Analysis with Bidirectional LSTM
 Project ID: DL-014
 
 app.py
 ------
-Streamlit Web Application for real-time text sentiment analysis using
-a trained Long Short-Term Memory (LSTM) deep learning model.
+Streamlit Web Application for real-time sentiment analysis using
+a trained Bidirectional Long Short-Term Memory (BiLSTM) deep learning model.
+Supports 3-Class Sentiment: Positive, Negative, Neutral, and Uncertain.
 """
 
 import os
@@ -16,39 +17,44 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
 os.environ["KERAS_HOME"] = "/tmp/keras"
 
-import re
 import json
 import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+from preprocessing import (
+    clean_text, load_tokenizer_from_file,
+    texts_to_padded_sequences, MAX_SEQUENCE_LENGTH
+)
 
 # -----------------------------------------------------------------------------
 # Configuration & Constants
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Text Sentiment Analysis using LSTM | DL-014",
+    page_title="Text Sentiment Analysis with BiLSTM | DL-014",
     page_icon="🎬",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 BASE_DIR = os.path.dirname(__file__)
-MODEL_DIR = os.path.join(BASE_DIR, "saved_model")
-KERAS_MODEL_FILE = os.path.join(MODEL_DIR, "sentiment_lstm_model.keras")
-H5_MODEL_FILE = os.path.join(MODEL_DIR, "sentiment_lstm_model.h5")
-MODEL_FILE = KERAS_MODEL_FILE if os.path.exists(KERAS_MODEL_FILE) else H5_MODEL_FILE
+SAVED_MODEL_DIR = os.path.join(BASE_DIR, "saved_model")
+MODEL_FILE = os.path.join(SAVED_MODEL_DIR, "sentiment_bilstm_model.keras")
+TOKENIZER_FILE = os.path.join(SAVED_MODEL_DIR, "tokenizer.json")
+METRICS_FILE = os.path.join(SAVED_MODEL_DIR, "model_info.json")
+HISTORY_PLOT_FILE = os.path.join(SAVED_MODEL_DIR, "training_history.png")
+CONFUSION_MATRIX_FILE = os.path.join(SAVED_MODEL_DIR, "confusion_matrix.png")
 
-WORD_INDEX_FILE = os.path.join(MODEL_DIR, "word_index.json")
-METRICS_FILE = os.path.join(MODEL_DIR, "model_info.json")
-HISTORY_PLOT_FILE = os.path.join(MODEL_DIR, "training_history.png")
-
-MAX_LEN = 200
+LABEL_NAMES = {
+    0: "Negative",
+    1: "Neutral",
+    2: "Positive"
+}
 
 # -----------------------------------------------------------------------------
-# Navy / Blue Modern UI Theme (Custom CSS)
+# Modern Navy / Blue Theme (Custom CSS)
 # -----------------------------------------------------------------------------
 NAVY_CSS = """
 <style>
@@ -92,7 +98,7 @@ NAVY_CSS = """
         font-size: 1.05rem;
         margin-top: 0.6rem;
         line-height: 1.5;
-        max-width: 800px;
+        max-width: 850px;
     }
 
     /* Cards */
@@ -114,14 +120,14 @@ NAVY_CSS = """
         margin-bottom: 0.5rem;
     }
     .metric-title {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         text-transform: uppercase;
         color: #64748b;
         font-weight: 700;
         letter-spacing: 0.5px;
     }
     .metric-value {
-        font-size: 1.25rem;
+        font-size: 1.2rem;
         font-weight: 700;
         color: #0f172a;
     }
@@ -143,17 +149,32 @@ NAVY_CSS = """
         text-align: center;
         box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.2);
     }
+    .sentiment-neutral {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 2px solid #0284c7;
+        border-radius: 14px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 8px 20px -4px rgba(2, 132, 199, 0.2);
+    }
+    .sentiment-uncertain {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 2px solid #f59e0b;
+        border-radius: 14px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 8px 20px -4px rgba(245, 158, 11, 0.2);
+    }
+
     .verdict-title {
         font-size: 2rem;
         font-weight: 800;
         margin: 0.2rem 0;
     }
-    .verdict-positive {
-        color: #047857;
-    }
-    .verdict-negative {
-        color: #b91c1c;
-    }
+    .verdict-positive { color: #047857; }
+    .verdict-negative { color: #b91c1c; }
+    .verdict-neutral  { color: #0369a1; }
+    .verdict-uncertain{ color: #b45309; }
 
     /* How it works pipeline steps */
     .pipeline-step {
@@ -198,111 +219,83 @@ st.markdown(NAVY_CSS, unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
-# Helper Functions: Loading Model & Vocabulary
+# Caching Model & Tokenizer
 # -----------------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
-def load_sentiment_model(file_path):
-    """Loads the compiled Keras model from disk."""
-    if not os.path.exists(file_path):
+def get_model():
+    """Loads compiled Keras Bidirectional LSTM model."""
+    if not os.path.exists(MODEL_FILE):
         return None
     try:
-        model = load_model(file_path)
-        return model
+        return load_model(MODEL_FILE)
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None
 
 
-@st.cache_data(show_spinner=False)
-def load_word_index():
-    """Loads the word-to-id mapping dictionary."""
-    if not os.path.exists(WORD_INDEX_FILE):
+@st.cache_resource(show_spinner=False)
+def get_tokenizer():
+    """Loads fitted tokenizer from JSON."""
+    if not os.path.exists(TOKENIZER_FILE):
         return None
-    with open(WORD_INDEX_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        return load_tokenizer_from_file(TOKENIZER_FILE)
+    except Exception as e:
+        st.error(f"Error loading tokenizer: {e}")
+        return None
 
 
 @st.cache_data(show_spinner=False)
-def load_metrics():
-    """Loads saved training metrics."""
+def get_metrics():
+    """Loads model evaluation metrics metadata."""
     if not os.path.exists(METRICS_FILE):
         return None
     with open(METRICS_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def preprocess_text(text: str, word_to_id: dict, max_len: int = MAX_LEN):
-    """
-    Cleans and tokenizes input text consistently with model training:
-    - Lowercase
-    - Regex tokenization
-    - Vocabulary mapping (fallback to <UNK> = 2)
-    - Prepends <START> token (1)
-    - Pre-pads to max_len
-    """
-    text_clean = text.lower()
-    tokens = re.findall(r"[a-z0-9']+", text_clean)
-    if not tokens:
-        return np.zeros((1, max_len), dtype=np.int32), []
-
-    token_ids = [1]  # <START> token
-    mapped_tokens = [("<START>", 1)]
-    for t in tokens:
-        idx = word_to_id.get(t, 2)  # 2 is <UNK>
-        token_ids.append(idx)
-        mapped_tokens.append((t, idx))
-
-    padded = pad_sequences([token_ids], maxlen=max_len, padding="pre", truncating="pre")
-    return padded, mapped_tokens
-
-
-def train_model_automatically():
-    """Runs train_model.py in-process if model does not exist."""
+def trigger_training():
+    """Trains the model automatically if missing."""
     import train_model
-    train_model.train(epochs=3, train_size=10000, test_size=2500, force=False)
+    train_model.train(epochs=6, force=False)
 
 
-# -----------------------------------------------------------------------------
-# Check & Ensure Model Exists
-# -----------------------------------------------------------------------------
-active_model_file = KERAS_MODEL_FILE if os.path.exists(KERAS_MODEL_FILE) else H5_MODEL_FILE
-
-if not os.path.exists(active_model_file) or not os.path.exists(WORD_INDEX_FILE):
-    st.info("📦 **Initial Setup Detected:** Trained model files not found locally. Initiating model training now on the IMDb dataset (subset configured for quick student laptop execution)...")
-    with st.spinner("Training LSTM model on IMDb dataset... This usually takes ~30-60 seconds on standard laptops..."):
-        train_model_automatically()
+# Check & ensure model exists
+if not os.path.exists(MODEL_FILE) or not os.path.exists(TOKENIZER_FILE):
+    st.info("📦 **Initial Setup Detected:** Trained BiLSTM model files not found locally. Initiating training pipeline...")
+    with st.spinner("Training Bidirectional LSTM on balanced multi-domain dataset... (~60-90s on laptop)..."):
+        trigger_training()
         st.cache_resource.clear()
         st.cache_data.clear()
-    active_model_file = KERAS_MODEL_FILE if os.path.exists(KERAS_MODEL_FILE) else H5_MODEL_FILE
     st.success("✅ Model training completed and files saved successfully!")
     st.rerun()
 
-model = load_sentiment_model(active_model_file)
-word_to_id = load_word_index()
-metrics = load_metrics()
+model = get_model()
+tokenizer = get_tokenizer()
+metrics = get_metrics()
 
-if model is None or word_to_id is None:
-    st.error("⚠️ Failed to load model or vocabulary. Please check the `saved_model/` folder.")
+if model is None or tokenizer is None:
+    st.error("⚠️ Failed to load model or tokenizer. Please run `python3 train_model.py --force` to retrain.")
     st.stop()
 
 
 # -----------------------------------------------------------------------------
-# UI Header Banner
+# Header Banner
 # -----------------------------------------------------------------------------
 st.markdown("""
 <div class="hero-banner">
-    <span class="hero-badge">PROJECT ID: DL-014 • DEEP LEARNING</span>
-    <h1 class="hero-title">🎬 Text Sentiment Analysis using LSTM</h1>
+    <span class="hero-badge">PROJECT ID: DL-014 • DEEP LEARNING (IMPROVED)</span>
+    <h1 class="hero-title">🎬 Text Sentiment Analysis with Bidirectional LSTM</h1>
     <p class="hero-subtitle">
-        An end-to-end Natural Language Processing (NLP) system trained on real IMDb movie reviews.
-        Enter any review or choose a sample to analyze whether the underlying sentiment is <b>Positive</b> or <b>Negative</b>.
+        An advanced Natural Language Processing system powered by a <b>Bidirectional LSTM</b> with dynamic padding masking.
+        Trained on balanced multi-domain data (conversational emotions, negations, social media, movie reviews, and factual statements).
     </p>
 </div>
 """, unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
-# Session State for User Review Text
+# Session State Management
 # -----------------------------------------------------------------------------
 if "review_input" not in st.session_state:
     st.session_state.review_input = ""
@@ -310,91 +303,86 @@ if "review_input" not in st.session_state:
 if "last_analyzed" not in st.session_state:
     st.session_state.last_analyzed = None
 
-# Sample reviews
+# Comprehensive Samples
 SAMPLES = {
-    "🌟 Masterpiece (Positive)": (
-        "This movie was an absolute masterpiece! The directing was visionary, the acting was powerful and heartfelt, "
-        "and the emotional soundtrack stayed with me long after the credits rolled. Highly recommended to everyone!"
-    ),
-    "🍿 Fun & Heartwarming (Positive)": (
-        "A delightful and heartwarming story with great comedic timing and charming chemistry between the lead actors. "
-        "Truly enjoyable from start to finish."
-    ),
-    "💔 Boring & Disappointing (Negative)": (
-        "A complete waste of time. The script was hollow, characters made no sense, and the pacing dragged endlessly. "
-        "I was so bored I almost walked out halfway through. Very disappointing."
-    ),
-    "👎 Terrible Acting (Negative)": (
-        "Horrible dialogue and atrocious acting throughout. The plot twists were absurd and predictable. "
-        "Save your money and skip this disaster."
-    )
+    "💔 Negative: Demotivation": "I am demotivated with her.",
+    "👎 Negative: Complaint": "I hate this product and regret my decision to buy it. Total waste of money.",
+    "🚫 Negative: Negation": "This is not good. Nobody enjoyed the presentation.",
+    "🌟 Positive: Masterpiece": "This movie was an absolute masterpiece! Directing was visionary and acting was superb.",
+    "🎉 Positive: Motivation": "I am so happy and motivated with the fantastic results our team achieved.",
+    "⚖️ Neutral: Daily Fact": "I went to college today.",
+    "📚 Neutral: Informational": "The library opens at 9 AM and the train arrives at platform four at 4 PM.",
+    "🤔 Subtle: Double Negation": "I don't think this is bad at all. Actually pretty decent."
 }
 
 
 # -----------------------------------------------------------------------------
-# Sidebar: Model Architecture & Evaluation Stats
+# Sidebar: Model Architecture & Evaluation Comparison
 # -----------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 📊 Model Specifications")
-    st.markdown(
-        """
-        <div style="font-size:0.9rem; color:#475569; margin-bottom:1rem;">
-        Real metrics evaluated on unseen IMDb test reviews:
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("### 📊 Academic Specifications")
 
     if metrics:
         test_acc = metrics.get("test_accuracy", 0.0) * 100
-        test_loss = metrics.get("test_loss", 0.0)
-        vocab_size = metrics.get("vocabulary_size", 10000)
-        seq_len = metrics.get("max_sequence_length", 200)
-        epochs = metrics.get("epochs_trained", 3)
-        train_samples = metrics.get("train_samples", 10000)
+        f1_score = metrics.get("f1_score_weighted", 0.0)
+        vocab_size = metrics.get("vocab_size", 15000)
+        train_samples = metrics.get("train_samples", 13650)
+        baseline = metrics.get("baseline_comparison", {})
 
         st.markdown(f"""
         <div class="metric-pill">
-            <div class="metric-title">Test Accuracy (Real)</div>
+            <div class="metric-title">BiLSTM Test Accuracy (Real)</div>
             <div class="metric-value">{test_acc:.2f}%</div>
         </div>
         <div class="metric-pill">
-            <div class="metric-title">Test Loss</div>
-            <div class="metric-value">{test_loss:.4f}</div>
+            <div class="metric-title">BiLSTM F1-Score (Weighted)</div>
+            <div class="metric-value">{f1_score:.4f}</div>
         </div>
         <div class="metric-pill">
-            <div class="metric-title">Dataset Subset</div>
-            <div class="metric-value">{train_samples:,} reviews</div>
+            <div class="metric-title">Training Samples</div>
+            <div class="metric-value">{train_samples:,} sentences</div>
         </div>
         <div class="metric-pill">
             <div class="metric-title">Vocabulary Size</div>
             <div class="metric-value">{vocab_size:,} words</div>
         </div>
-        <div class="metric-pill">
-            <div class="metric-title">Sequence Length</div>
-            <div class="metric-value">{seq_len} tokens</div>
-        </div>
         """, unsafe_allow_html=True)
-    else:
-        st.info("Metrics not found in saved_model/model_info.json")
+
+        if baseline:
+            st.markdown("---")
+            st.markdown("### ⚖️ Baseline Comparison")
+            base_acc = baseline.get("test_accuracy", 0.0) * 100
+            base_f1 = baseline.get("f1_score", 0.0)
+            st.caption("TF-IDF + Logistic Regression Baseline:")
+            st.markdown(f"""
+            - **Baseline Accuracy**: `{base_acc:.2f}%`
+            - **Baseline F1-Score**: `{base_f1:.4f}`
+            - **BiLSTM Gain**: `+{test_acc - base_acc:.2f}%`
+            """)
 
     st.markdown("---")
-    st.markdown("### 🧠 Network Layers")
+    st.markdown("### 🧠 Neural Architecture")
     st.markdown(
         """
-        - **Embedding Layer**: 64 dimensions
+        - **Embedding Layer**: 100-dim (`mask_zero=True`)
         - **SpatialDropout1D**: 0.2 rate
-        - **LSTM Layer**: 64 recurrent units
-        - **Dense Hidden**: 32 units (ReLU)
-        - **Dropout**: 0.3 rate
-        - **Dense Output**: 1 unit (Sigmoid)
+        - **Bidirectional LSTM**: 64 units forward + 64 backward
+        - **Dense Representation**: 64 units (ReLU)
+        - **Batch Normalization**: Stabilizes hidden activations
+        - **Dropout**: 0.3 regularization
+        - **Softmax Output**: 3 classes (Neg / Neu / Pos)
         """
     )
+
+    if os.path.exists(CONFUSION_MATRIX_FILE):
+        st.markdown("---")
+        st.markdown("### 🔍 Confusion Matrix")
+        st.image(CONFUSION_MATRIX_FILE, caption="Evaluation Confusion Matrix on Test Split", use_container_width=True)
 
     if os.path.exists(HISTORY_PLOT_FILE):
         st.markdown("---")
         st.markdown("### 📈 Training Curves")
-        st.image(HISTORY_PLOT_FILE, caption="Accuracy & Loss progression over training epochs", use_container_width=True)
+        st.image(HISTORY_PLOT_FILE, caption="Accuracy & Loss progression over epochs", use_container_width=True)
 
 
 # -----------------------------------------------------------------------------
@@ -403,31 +391,46 @@ with st.sidebar:
 col_left, col_right = st.columns([1.1, 0.9], gap="large")
 
 with col_left:
-    st.markdown("### ✍️ Enter Movie or Product Review")
-    st.caption("Type your review below or click one of the quick test samples to load realistic text:")
+    st.markdown("### ✍️ Input Sentence or Review")
+    st.caption("Type any sentence below or click a verified test sample to evaluate:")
 
-    # Sample review chips
+    # Sample Buttons organized by sentiment
     st.markdown("**Click a sample to test:**")
-    scol1, scol2 = st.columns(2)
+
+    scol1, scol2, scol3 = st.columns(3)
     with scol1:
-        if st.button("🌟 Positive Sample 1", key="btn_pos1", use_container_width=True):
-            st.session_state.review_input = SAMPLES["🌟 Masterpiece (Positive)"]
-        if st.button("🍿 Positive Sample 2", key="btn_pos2", use_container_width=True):
-            st.session_state.review_input = SAMPLES["🍿 Fun & Heartwarming (Positive)"]
+        st.markdown("<small><b>Negative Samples</b></small>", unsafe_allow_html=True)
+        if st.button("💔 Demotivated", key="s_neg1", use_container_width=True):
+            st.session_state.review_input = SAMPLES["💔 Negative: Demotivation"]
+        if st.button("👎 Regret & Waste", key="s_neg2", use_container_width=True):
+            st.session_state.review_input = SAMPLES["👎 Negative: Complaint"]
+        if st.button("🚫 Negation ('not good')", key="s_neg3", use_container_width=True):
+            st.session_state.review_input = SAMPLES["🚫 Negative: Negation"]
+
     with scol2:
-        if st.button("💔 Negative Sample 1", key="btn_neg1", use_container_width=True):
-            st.session_state.review_input = SAMPLES["💔 Boring & Disappointing (Negative)"]
-        if st.button("👎 Negative Sample 2", key="btn_neg2", use_container_width=True):
-            st.session_state.review_input = SAMPLES["👎 Terrible Acting (Negative)"]
+        st.markdown("<small><b>Positive Samples</b></small>", unsafe_allow_html=True)
+        if st.button("🌟 Masterpiece", key="s_pos1", use_container_width=True):
+            st.session_state.review_input = SAMPLES["🌟 Positive: Masterpiece"]
+        if st.button("🎉 Motivated & Happy", key="s_pos2", use_container_width=True):
+            st.session_state.review_input = SAMPLES["🎉 Positive: Motivation"]
+        if st.button("🤔 Not Bad (Double Neg)", key="s_pos3", use_container_width=True):
+            st.session_state.review_input = SAMPLES["🤔 Subtle: Double Negation"]
+
+    with scol3:
+        st.markdown("<small><b>Neutral Samples</b></small>", unsafe_allow_html=True)
+        if st.button("⚖️ Went to college", key="s_neu1", use_container_width=True):
+            st.session_state.review_input = SAMPLES["⚖️ Neutral: Daily Fact"]
+        if st.button("📚 Library & Train", key="s_neu2", use_container_width=True):
+            st.session_state.review_input = SAMPLES["📚 Neutral: Informational"]
 
     # Text Area
     user_review = st.text_area(
-        label="Review Text",
+        label="Input Text",
         value=st.session_state.review_input,
-        placeholder="e.g. This movie was surprisingly touching and well crafted...",
-        height=160,
+        placeholder="e.g., I am demotivated with her. OR The meeting begins at 10 AM.",
+        height=140,
         key="review_text_area",
-        help="Input a movie, book, or product review to classify."
+        help="Input any conversational statement, review, or factual sentence."
     )
 
     # Word and Character counter
@@ -454,123 +457,169 @@ with col_left:
 with col_right:
     st.markdown("### 🎯 Prediction Results")
 
-    # If Analyze button is clicked or we have an active input to analyze
     if analyze_clicked:
-        clean_text = user_review.strip()
-        if not clean_text:
-            st.warning("⚠️ **Friendly reminder:** Please enter or select a review before clicking Analyze.")
+        raw_text = user_review.strip()
+        if not raw_text:
+            st.warning("⚠️ **Friendly reminder:** Please enter or select a sentence before clicking Analyze.")
         else:
-            # Preprocess text
-            padded_input, mapped_tokens = preprocess_text(clean_text, word_to_id, max_len=MAX_LEN)
+            # Preprocess using identical training pipeline
+            cleaned = clean_text(raw_text)
+            padded = texts_to_padded_sequences([raw_text], tokenizer, max_len=MAX_SEQUENCE_LENGTH)
 
-            # Predict probability
-            prob_raw = float(model.predict(padded_input, verbose=0)[0][0])
-            prob_positive = prob_raw
-            prob_negative = 1.0 - prob_raw
+            # Predict probabilities
+            probs = model.predict(padded, verbose=0)[0]
+            neg_p = float(probs[0])
+            neu_p = float(probs[1])
+            pos_p = float(probs[2])
 
-            is_positive = prob_positive >= 0.5
-            sentiment_label = "Positive" if is_positive else "Negative"
-            confidence_pct = (prob_positive if is_positive else prob_negative) * 100.0
+            pred_idx = int(np.argmax(probs))
+            top_prob = float(probs[pred_idx])
+
+            # Uncertainty calibration:
+            # If top probability is < 0.45 or difference between top two is < 0.08, flag as Uncertain
+            sorted_probs = sorted([neg_p, neu_p, pos_p], reverse=True)
+            diff_top_two = sorted_probs[0] - sorted_probs[1]
+            is_uncertain = (top_prob < 0.45) or (diff_top_two < 0.08)
+
+            if is_uncertain:
+                verdict = "Uncertain"
+            else:
+                verdict = LABEL_NAMES[pred_idx]
+
+            # Extract token IDs for inspection
+            seq_tokens = tokenizer.texts_to_sequences([cleaned])[0]
+            token_pairs = []
+            words_in_clean = cleaned.split()
+            for w in words_in_clean:
+                tid = tokenizer.word_index.get(w, tokenizer.word_index.get("<UNK>", 1))
+                token_pairs.append((w, tid))
 
             st.session_state.last_analyzed = {
-                "text": clean_text,
-                "sentiment": sentiment_label,
-                "confidence": confidence_pct,
-                "prob_positive": prob_positive,
-                "prob_negative": prob_negative,
-                "tokens": mapped_tokens
+                "raw_text": raw_text,
+                "cleaned_text": cleaned,
+                "verdict": verdict,
+                "top_prob": top_prob * 100.0,
+                "prob_neg": neg_p,
+                "prob_neu": neu_p,
+                "prob_pos": pos_p,
+                "tokens": token_pairs,
+                "is_uncertain": is_uncertain
             }
 
-    # Render results if available
+    # Render results
     if st.session_state.last_analyzed:
         res = st.session_state.last_analyzed
-        is_pos = res["sentiment"] == "Positive"
+        v = res["verdict"]
 
-        if is_pos:
+        if v == "Positive":
             st.markdown(f"""
             <div class="sentiment-positive">
-                <div style="font-size: 2.8rem;">🎉</div>
+                <div style="font-size: 2.6rem;">🎉</div>
                 <div class="verdict-title verdict-positive">Positive Sentiment</div>
-                <div style="font-size: 1.15rem; color: #065f46; font-weight: 600;">
-                    Model Confidence: <b>{res['confidence']:.2f}%</b>
+                <div style="font-size: 1.1rem; color: #065f46; font-weight: 600;">
+                    Model Confidence: <b>{res['top_prob']:.2f}%</b>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        elif v == "Negative":
+            st.markdown(f"""
+            <div class="sentiment-negative">
+                <div style="font-size: 2.6rem;">⚠️</div>
+                <div class="verdict-title verdict-negative">Negative Sentiment</div>
+                <div style="font-size: 1.1rem; color: #991b1b; font-weight: 600;">
+                    Model Confidence: <b>{res['top_prob']:.2f}%</b>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        elif v == "Neutral":
+            st.markdown(f"""
+            <div class="sentiment-neutral">
+                <div style="font-size: 2.6rem;">⚖️</div>
+                <div class="verdict-title verdict-neutral">Neutral Statement</div>
+                <div style="font-size: 1.1rem; color: #075985; font-weight: 600;">
+                    Model Confidence: <b>{res['top_prob']:.2f}%</b>
                 </div>
             </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown(f"""
-            <div class="sentiment-negative">
-                <div style="font-size: 2.8rem;">⚠️</div>
-                <div class="verdict-title verdict-negative">Negative Sentiment</div>
-                <div style="font-size: 1.15rem; color: #991b1b; font-weight: 600;">
-                    Model Confidence: <b>{res['confidence']:.2f}%</b>
+            <div class="sentiment-uncertain">
+                <div style="font-size: 2.6rem;">🤔</div>
+                <div class="verdict-title verdict-uncertain">Uncertain / Ambiguous</div>
+                <div style="font-size: 0.95rem; color: #92400e; font-weight: 600; margin-top: 5px;">
+                    Model indicates mixed signals or balanced sentiment probabilities.
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Confidence Bar / Probability Distribution Chart
-        st.markdown("##### Probability Breakdown")
-        col_p1, col_p2 = st.columns(2)
-        col_p1.metric("Positive Probability", f"{res['prob_positive']*100:.2f}%")
-        col_p2.metric("Negative Probability", f"{res['prob_negative']*100:.2f}%")
+        # 3-Class Probability Breakdown
+        st.markdown("##### 3-Class Probability Distribution")
+        pcol1, pcol2, pcol3 = st.columns(3)
+        pcol1.metric("Negative", f"{res['prob_neg']*100:.2f}%")
+        pcol2.metric("Neutral", f"{res['prob_neu']*100:.2f}%")
+        pcol3.metric("Positive", f"{res['prob_pos']*100:.2f}%")
 
-        # Custom Horizontal Probability Bar
-        pos_width = max(1, min(99, int(res['prob_positive'] * 100)))
-        neg_width = 100 - pos_width
+        # Custom 3-segment probability meter
+        neg_w = max(1, min(98, int(res['prob_neg'] * 100)))
+        neu_w = max(1, min(98 - neg_w, int(res['prob_neu'] * 100)))
+        pos_w = max(1, 100 - neg_w - neu_w)
+
         st.markdown(f"""
         <div style="background-color: #e2e8f0; border-radius: 9999px; height: 26px; overflow: hidden; display: flex; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); margin-top: 5px;">
-            <div style="background: linear-gradient(90deg, #10b981, #059669); width: {pos_width}%; color: white; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; justify-content: center;">
-                {pos_width}% Pos
+            <div style="background: linear-gradient(90deg, #dc2626, #ef4444); width: {neg_w}%; color: white; font-size: 0.72rem; font-weight: bold; display: flex; align-items: center; justify-content: center;">
+                {neg_w}% Neg
             </div>
-            <div style="background: linear-gradient(90deg, #dc2626, #ef4444); width: {neg_width}%; color: white; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; justify-content: center;">
-                {neg_width}% Neg
+            <div style="background: linear-gradient(90deg, #0284c7, #38bdf8); width: {neu_w}%; color: white; font-size: 0.72rem; font-weight: bold; display: flex; align-items: center; justify-content: center;">
+                {neu_w}% Neu
+            </div>
+            <div style="background: linear-gradient(90deg, #10b981, #059669); width: {pos_w}%; color: white; font-size: 0.72rem; font-weight: bold; display: flex; align-items: center; justify-content: center;">
+                {pos_w}% Pos
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Token breakdown preview in an expander
-        with st.expander("🔍 View Preprocessing & Token Sequence"):
-            st.caption(f"First 15 tokens mapped to IMDb vocabulary IDs (Total review words: {len(res['tokens'])-1}):")
-            sample_tokens = res["tokens"][:15]
-            token_display = ", ".join([f"`{t}` → **{i}**" for t, i in sample_tokens])
-            st.markdown(token_display)
-            st.markdown(f"*Input tensor was padded to fixed shape: `(1, {MAX_LEN})`*")
+        # Preprocessing & Token Breakdown
+        with st.expander("🔍 View Preprocessing Pipeline & Tokens"):
+            st.markdown(f"**Cleaned & Contraction Expanded**: `{res['cleaned_text']}`")
+            sample_tokens = res["tokens"][:18]
+            token_display = ", ".join([f"`{w}` → **{tid}**" for w, tid in sample_tokens])
+            st.markdown(f"**Vocabulary Mappings**: {token_display}")
+            st.caption(f"Input is zero-padded with dynamic mask (`mask_zero=True`) to fixed tensor shape `(1, {MAX_SEQUENCE_LENGTH})`.")
 
     elif not analyze_clicked:
         st.markdown("""
         <div style="background:#ffffff; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 2.5rem 1.5rem; text-align: center; color: #64748b;">
             <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">⏱️</div>
-            <div style="font-weight: 600; font-size: 1.1rem; color: #1e293b;">Awaiting Review Input</div>
+            <div style="font-weight: 600; font-size: 1.1rem; color: #1e293b;">Awaiting Input Text</div>
             <p style="font-size: 0.9rem; margin-top: 0.4rem;">
-                Select a sample from the left or enter your own review text and click <b>Analyze Sentiment</b> to see prediction.
+                Enter your own sentence or choose one of the verified sample buttons on the left and click <b>Analyze Sentiment</b>.
             </p>
         </div>
         """, unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
-# "How It Works" Educational Deep Dive Section
+# "How It Works" Educational Architecture Deep Dive
 # -----------------------------------------------------------------------------
 st.markdown("<br><hr>", unsafe_allow_html=True)
-st.markdown("### 📘 How It Works: The LSTM Deep Learning Pipeline")
-st.markdown("A step-by-step beginner-friendly explanation of how this BTech DL prototype turns raw English text into sentiment predictions:")
+st.markdown("### 📘 How It Works: The Improved BiLSTM Deep Learning Pipeline")
+st.markdown("An end-to-end breakdown of how this academic prototype resolves negations, short emotional statements, and factual neutrality:")
 
 c1, c2, c3 = st.columns(3)
 with c1:
     st.markdown("""
     <div class="pipeline-step">
-        <span class="pipeline-num">1</span><b>Tokenization</b>
-        <p style="font-size:0.88rem; color:#475569; margin-top:6px;">
-            Raw text is cleaned, converted to lowercase, and split into individual word tokens.
-            Each word is translated into an integer index based on frequency rank in the IMDb vocabulary.
+        <span class="pipeline-num">1</span><b>Contraction & Negation Normalization</b>
+        <p style="font-size:0.86rem; color:#475569; margin-top:6px;">
+            Contractions like <i>"don't"</i>, <i>"can't"</i>, and <i>"isn't"</i> are expanded to <code>"do not"</code>, <code>"cannot"</code>, and <code>"is not"</code>. Negation words are strictly protected from stop-word filters.
         </p>
     </div>
     <div class="pipeline-step">
-        <span class="pipeline-num">2</span><b>Sequence Padding</b>
-        <p style="font-size:0.88rem; color:#475569; margin-top:6px;">
-            Neural networks require fixed-dimension tensors. Using <code>pad_sequences(maxlen=200)</code>,
-            short reviews are pre-padded with 0 (<PAD>) and longer reviews are truncated safely.
+        <span class="pipeline-num">2</span><b>Multi-Domain Vocabulary Tokenizer</b>
+        <p style="font-size:0.86rem; color:#475569; margin-top:6px;">
+            Unlike movie-only vocabularies, our 15,000-word vocabulary spans social media, conversational statements, and emotional expressions like <i>"demotivated"</i>, <i>"disappointed"</i>, and <i>"regret"</i>.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -578,15 +627,15 @@ with c1:
 with c2:
     st.markdown("""
     <div class="pipeline-step">
-        <span class="pipeline-num">3</span><b>Word Embedding</b>
-        <p style="font-size:0.88rem; color:#475569; margin-top:6px;">
-            Instead of sparse one-hot vectors, an <code>Embedding(10000, 64)</code> layer projects each integer into a 64-dimensional continuous vector space where semantically similar words cluster together.
+        <span class="pipeline-num">3</span><b>Masked Embedding Layer</b>
+        <p style="font-size:0.86rem; color:#475569; margin-top:6px;">
+            Using <code>Embedding(mask_zero=True)</code>, the network instructs recurrent layers to ignore padding zeros completely. A 5-word sentence is not drowned out by 115 padding steps.
         </p>
     </div>
     <div class="pipeline-step">
-        <span class="pipeline-num">4</span><b>LSTM Memory Cells</b>
-        <p style="font-size:0.88rem; color:#475569; margin-top:6px;">
-            Standard RNNs suffer from vanishing gradients. An <b>LSTM</b> uses <em>Forget, Input, and Output gates</em> to preserve long-range dependencies and understand negations like <i>"not great"</i>.
+        <span class="pipeline-num">4</span><b>Bidirectional LSTM</b>
+        <p style="font-size:0.86rem; color:#475569; margin-top:6px;">
+            Standard LSTMs only read forward. A <b>BiLSTM</b> processes text in both forward and backward directions, allowing <i>"happy"</i> to be immediately conditioned by preceding <i>"not"</i> tokens.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -594,23 +643,21 @@ with c2:
 with c3:
     st.markdown("""
     <div class="pipeline-step">
-        <span class="pipeline-num">5</span><b>Dense & Dropout</b>
-        <p style="font-size:0.88rem; color:#475569; margin-top:6px;">
-            The LSTM output sequence feeds into a 32-unit Dense layer with ReLU activation. Dropout (0.3) randomly deactivates neurons during training to prevent overfitting.
+        <span class="pipeline-num">5</span><b>Batch Normalization & Dropout</b>
+        <p style="font-size:0.86rem; color:#475569; margin-top:6px;">
+            Dense layer features are normalized across training batches, and 30% dropout is applied to prevent the model from memorizing specific training phrases.
         </p>
     </div>
     <div class="pipeline-step">
-        <span class="pipeline-num">6</span><b>Sigmoid Classification</b>
-        <p style="font-size:0.88rem; color:#475569; margin-top:6px;">
-            The final neuron uses the <code>Sigmoid</code> function: <br>
-            <code>S(z) = 1 / (1 + e<sup>-z</sup>)</code> <br>
-            It squashes the value between 0.0 (Negative) and 1.0 (Positive) with a 0.5 threshold.
+        <span class="pipeline-num">6</span><b>3-Class Softmax & Calibration</b>
+        <p style="font-size:0.86rem; color:#475569; margin-top:6px;">
+            Outputs a calibrated probability vector over <b>[Negative, Neutral, Positive]</b>. If probabilities are balanced or confidence is low, it safely flags <b>Uncertain</b>.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("""
 <div style="text-align: center; color: #94a3b8; font-size: 0.82rem; margin-top: 1.5rem;">
-    Project DL-014 • Text Sentiment Analysis using LSTM • Built with TensorFlow & Streamlit
+    Project DL-014 • Text Sentiment Analysis with Bidirectional LSTM • Built with TensorFlow & Streamlit
 </div>
 """, unsafe_allow_html=True)
